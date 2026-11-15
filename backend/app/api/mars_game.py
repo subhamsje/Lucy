@@ -428,6 +428,7 @@ class SatelliteDesignValidationRequest(BaseModel):
     selected_components: Dict[str, str] # e.g. {"STRUCTURE": "STR_HEX_50", ...}
     selected_instruments: List[str] # e.g. ["INST_OPTICAL", "INST_RADAR"]
     mission_id: str = "MISSION_A"
+    player_budget_credits: Optional[float] = None
 
 @router.post("/satellite/validate-design")
 def validate_satellite_design(req: SatelliteDesignValidationRequest):
@@ -466,8 +467,8 @@ def validate_satellite_design(req: SatelliteDesignValidationRequest):
             power_consumption_w += inst.get("power_w", 0.0)
 
     # Educational formulas
-    starting_budget = 400000.0
-    remaining_budget = max(0.0, starting_budget - total_cost_credits)
+    starting_budget = float(req.player_budget_credits if req.player_budget_credits is not None else 400000.0)
+    remaining_budget = starting_budget - total_cost_credits
     mass_limit = 50.0
     is_mass_valid = total_mass_kg <= mass_limit
     is_budget_valid = total_cost_credits <= starting_budget
