@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KHAGOL // SPACE AGENCY — Redirecting...</title>
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var repo = '/Lucy';
+      var rel = path;
+      if (rel.indexOf(repo) === 0) {
+        rel = rel.substring(repo.length);
+      }
+      rel = rel.replace(/^\//, '').replace(/\/$/, '');
+      if (rel === 'app' || rel === 'app/') {
+        window.location.replace(repo + '/app.html' + window.location.search + window.location.hash);
+      } else if (rel === 'mars' || rel === 'mars/') {
+        window.location.replace(repo + '/mars.html' + window.location.search + window.location.hash);
+      } else if (rel === 'titan' || rel === 'titan/') {
+        window.location.replace(repo + '/titan.html' + window.location.search + window.location.hash);
+      } else {
+        window.location.replace(repo + '/index.html' + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
+</head>
+<body style="background:#07090e;color:#79A8D0;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+  <p>RE-ROUTING TO MISSION DISPATCH...</p>
+</body>
+</html>

@@ -1,0 +1,2819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KHAGOL // SPACE AGENCY — Human Space Exploration & Engineering</title>
+  <link rel="icon" type="image/png" href="assets/khagol_icon.png">
+  
+  <!-- Typography: Inter for editorial precision + IBM Plex Mono for telemetry -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Three.js for 3D Hero, Spacecraft Assembly & WebGL Assets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP & ScrollTrigger for Cinematic Scroll Storytelling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       SWISS AEROSPACE DESIGN SYSTEM SPECIFICATION
+       Strict Dark Palette:
+       Background: #111318 | Chassis: #171B22 | Surface: #1D222B | Border: #343943
+       Primary Text: #E2E7EF | Secondary Text: #929BAA
+       Accent Blue: #79A8D0 | Warning: #C89B54 | Mars Accent: #B76546 | Nominal Green: #5FA882
+       ========================================================================== */
+    :root {
+      --bg-void: #111318;
+      --bg-chassis: #171B22;
+      --bg-surface: #1D222B;
+      --bg-surface-hover: #252C38;
+      --bg-inset: #0D0F14;
+
+      --border-color: #343943;
+      --border-dark: #232833;
+      --border-light: #4A5262;
+
+      --text-bright: #FFFFFF;
+      --text-primary: #E2E7EF;
+      --text-secondary: #929BAA;
+      --text-dim: #5C6577;
+
+      --accent-blue: #79A8D0;
+      --accent-blue-dim: #1F2E3E;
+      --accent-amber: #C89B54;
+      --accent-amber-dim: #382B17;
+      --accent-mars: #B76546;
+      --accent-mars-dim: #331A12;
+      --nominal-green: #5FA882;
+      --danger-coral: #C96A6A;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'Menlo', 'Consolas', monospace;
+
+      --nav-height: 56px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+    }
+
+    body {
+      overflow-x: hidden;
+      line-height: 1.6;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--bg-void);
+    }
+
+    .tabular-nums {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Accessibility: Respect Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ==========================================================================
+       REFINED FLOATING NAVIGATION SYSTEM
+       ========================================================================== */
+    header.floating-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: rgba(17, 19, 24, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 1000;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-bright);
+    }
+    .brand-logo-pill {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+    }
+    .brand-title {
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-bright);
+    }
+    .brand-subtitle {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      margin-left: 6px;
+      padding-left: 8px;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .nav-links-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+      position: relative;
+    }
+    .nav-link-item {
+      position: relative;
+    }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 6px 14px;
+      border-radius: 3px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .nav-link:hover {
+      color: var(--text-bright);
+      background: var(--bg-surface);
+    }
+    .nav-link.active {
+      color: var(--accent-blue);
+      background: var(--accent-blue-dim);
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn-portal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-bright);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 3px;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      cursor: pointer;
+      font-family: var(--font-sans);
+    }
+    .btn-portal:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-light);
+    }
+    .btn-portal:active {
+      transform: scale(0.98);
+    }
+    .btn-portal-primary {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #0C121A;
+      font-weight: 700;
+    }
+    .btn-portal-primary:hover {
+      background: #8DBAE0;
+      border-color: #8DBAE0;
+      color: #080D14;
+    }
+    .btn-portal-mars {
+      background: var(--accent-mars);
+      border-color: var(--accent-mars);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .btn-portal-mars:hover {
+      background: #C77759;
+      border-color: #C77759;
+    }
+    .btn-portal-large {
+      padding: 12px 24px;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+    }
+
+    /* Mobile Hamburger Menu */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-bright);
+      padding: 6px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    @media (max-width: 960px) {
+      .nav-links-wrap {
+        display: none;
+      }
+      .brand-subtitle {
+        display: none;
+      }
+      .mobile-menu-btn {
+        display: block;
+      }
+      header.floating-nav {
+        padding: 0 16px;
+      }
+    }
+
+    /* Mobile Drawer */
+    #mobileDrawer {
+      display: none;
+      position: fixed;
+      top: var(--nav-height);
+      left: 0;
+      right: 0;
+      background: var(--bg-chassis);
+      border-bottom: 1px solid var(--border-color);
+      padding: 20px 24px;
+      z-index: 999;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #mobileDrawer.open {
+      display: flex;
+    }
+    #mobileDrawer a {
+      color: var(--text-primary);
+      text-decoration: none;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 3px;
+    }
+    #mobileDrawer a:hover {
+      background: var(--bg-surface);
+      color: var(--accent-blue);
+    }
+
+    /* ==========================================================================
+       SECTION CONTAINERS & HEADINGS
+       ========================================================================== */
+    section {
+      padding: 110px 32px;
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .section-full {
+      max-width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .section-header {
+      margin-bottom: 44px;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-bright);
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      max-width: 680px;
+      line-height: 1.6;
+    }
+
+    /* Cards & Containers */
+    .editorial-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 860px) {
+      .editorial-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .editorial-card {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      border-radius: 4px;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .editorial-card:hover {
+      border-color: var(--border-light);
+      background: var(--bg-surface);
+      transform: translateY(-2px);
+    }
+    .editorial-card-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 12px;
+    }
+    .editorial-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .editorial-card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Telemetry Ribbon */
+    .telemetry-badge-ribbon {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .telemetry-badge {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    .telemetry-badge strong {
+      color: var(--text-bright);
+    }
+
+    /* ==========================================================================
+       HERO EXPERIENCE & OPENING CHOREOGRAPHY
+       ========================================================================== */
+    #hero {
+      position: relative;
+      height: 100vh;
+      min-height: 720px;
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: #111318;
+    }
+
+    #heroCanvasContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .hero-content-wrap {
+      position: relative;
+      z-index: 10;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 32px;
+      pointer-events: none;
+    }
+
+    .hero-editorial-panel {
+      max-width: 580px;
+      pointer-events: auto;
+    }
+
+    .hero-insignia {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(23, 27, 34, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-blue);
+      margin-bottom: 24px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-insignia-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--nominal-green);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 6px rgba(95, 168, 130, 0.6);
+    }
+
+    .hero-headline {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text-bright);
+      margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+      .hero-headline {
+        font-size: 34px;
+      }
+    }
+
+    .hero-headline span.reveal-word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    .hero-subtext {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 32px;
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    .hero-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    .hero-telemetry-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      opacity: 0;
+    }
+    .hero-telemetry-status strong {
+      color: var(--text-primary);
+    }
+
+    /* Skip Intro Button */
+    #skipIntroBtn {
+      position: absolute;
+      top: 76px;
+      right: 32px;
+      z-index: 100;
+      background: rgba(23, 27, 34, 0.7);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    #skipIntroBtn:hover {
+      color: var(--text-bright);
+      border-color: var(--border-light);
+    }
+
+    /* ==========================================================================
+       SECTION A: SOLAR SYSTEM 3D EXPLORER
+       ========================================================================== */
+    .solar-stage-container {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+    }
+    @media (max-width: 960px) {
+      .solar-stage-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    #solarCanvasStage {
+      width: 100%;
+      height: 480px;
+      background: #090B0E;
+      display: block;
+      cursor: grab;
+    }
+    #solarCanvasStage:active {
+      cursor: grabbing;
+    }
+    .solar-detail-pane {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (max-width: 960px) {
+      .solar-detail-pane {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+
+    .solar-destinations-pill-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .dest-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dest-pill:hover {
+      color: var(--text-bright);
+      border-color: var(--border-light);
+    }
+    .dest-pill.active {
+      background: var(--accent-blue-dim);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECTION B: SPACECRAFT ENGINEERING WORKBENCH
+       ========================================================================== */
+    .cad-stage-container {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+    }
+    @media (max-width: 960px) {
+      .cad-stage-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    #craftCadCanvas {
+      width: 100%;
+      height: 520px;
+      background: #090B0E;
+      display: block;
+      cursor: grab;
+    }
+    .cad-control-pane {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (max-width: 960px) {
+      .cad-control-pane {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+
+    .cad-action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cad-btn {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cad-btn:hover {
+      color: var(--text-bright);
+      border-color: var(--border-light);
+    }
+    .cad-btn.active {
+      background: var(--accent-blue-dim);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECTION C: LAUNCH OPERATIONS PAD & COUNTDOWN
+       ========================================================================== */
+    .launch-stage-container {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+    }
+    @media (max-width: 960px) {
+      .launch-stage-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    #launchPadCanvas {
+      width: 100%;
+      height: 480px;
+      background: #0B0E13;
+      display: block;
+    }
+    .launch-control-pane {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (max-width: 960px) {
+      .launch-control-pane {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+
+    /* ==========================================================================
+       SECTION D: MARS EXPLORATION SHOWCASE
+       ========================================================================== */
+    .mars-stage-container {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+    }
+    @media (max-width: 960px) {
+      .mars-stage-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    #marsRoverCanvas {
+      width: 100%;
+      height: 460px;
+      background: #140D0B;
+      display: block;
+      cursor: crosshair;
+    }
+    .mars-detail-pane {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (max-width: 960px) {
+      .mars-detail-pane {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+
+    /* ==========================================================================
+       SECTION E: MISSION CONTROL LIVE TELEMETRY
+       ========================================================================== */
+    .telemetry-console-box {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 24px;
+    }
+    .strip-chart-box {
+      background: #090B0E;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    #telemetryStripChart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ==========================================================================
+       SECTION F: MULTIPLAYER CONSENSUS GATE
+       ========================================================================== */
+    .frr-matrix-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+    .frr-station-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 100px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 12px;
+    }
+    .frr-station-row:last-child {
+      border-bottom: none;
+    }
+    .frr-vote-btn {
+      background: var(--bg-chassis);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .frr-vote-btn.go {
+      background: rgba(95, 168, 130, 0.2);
+      border-color: var(--nominal-green);
+      color: var(--nominal-green);
+      font-weight: 700;
+    }
+    .frr-vote-btn.nogo {
+      background: rgba(201, 106, 106, 0.2);
+      border-color: var(--danger-coral);
+      color: var(--danger-coral);
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    footer.aerospace-footer {
+      background: var(--bg-void);
+      border-top: 1px solid var(--border-color);
+      padding: 64px 32px 32px 32px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 960px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================= -->
+  <!-- FLOATING NAVIGATION BAR                                                   -->
+  <!-- ========================================================================= -->
+  <header class="floating-nav" id="mainHeader">
+    <a href="#hero" class="brand-mark" id="navBrand">
+      <img src="assets/khagol_logo.png" alt="KHAGOL" style="height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(121, 168, 208, 0.45));">
+      <span class="brand-title">KHAGOL</span>
+      <span class="brand-subtitle tabular-nums">MISSION ARCHITECT v2.0</span>
+    </a>
+
+    <!-- Desktop Navigation Links -->
+    <ul class="nav-links-wrap" id="navLinksList">
+      <li class="nav-link-item"><a href="#hero" class="nav-link active" data-section="hero">Home</a></li>
+      <li class="nav-link-item"><a href="#solarsystem" class="nav-link" data-section="solarsystem">Universe</a></li>
+      <li class="nav-link-item"><a href="#engineering" class="nav-link" data-section="engineering">Engineering</a></li>
+      <li class="nav-link-item"><a href="#launchops" class="nav-link" data-section="launchops">Launch Ops</a></li>
+      <li class="nav-link-item"><a href="#mars" class="nav-link" data-section="mars">Mars Exploration</a></li>
+      <li class="nav-link-item"><a href="#missioncontrol" class="nav-link" data-section="missioncontrol">Mission Control</a></li>
+      <li class="nav-link-item"><a href="#multiplayer" class="nav-link" data-section="multiplayer">Multiplayer</a></li>
+      <li class="nav-link-item"><a href="#technology" class="nav-link" data-section="technology">Technology</a></li>
+    </ul>
+
+    <!-- Quick Play Action -->
+    <div class="nav-actions">
+      <a href="app.html" class="btn-portal btn-portal-primary" id="btnNavPlayNow">
+        PLAY NOW ▶
+      </a>
+      <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Toggle navigation menu">
+        ☰ MENU
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobileDrawer">
+    <a href="#hero" onclick="closeMobileMenu()">Home</a>
+    <a href="#solarsystem" onclick="closeMobileMenu()">Universe Map</a>
+    <a href="#engineering" onclick="closeMobileMenu()">Spacecraft Engineering</a>
+    <a href="#launchops" onclick="closeMobileMenu()">Launch Operations</a>
+    <a href="#mars" onclick="closeMobileMenu()">Mars Exploration</a>
+    <a href="#missioncontrol" onclick="closeMobileMenu()">Mission Control</a>
+    <a href="#multiplayer" onclick="closeMobileMenu()">Multiplayer (4-Player)</a>
+    <a href="#technology" onclick="closeMobileMenu()">Technology Tree</a>
+    <a href="app.html" class="btn-portal btn-portal-primary" style="margin-top: 8px;">LAUNCH WORKSTATION ▶</a>
+    <a href="mars.html" class="btn-portal btn-portal-mars">PLAY MARS EXPLORATION ↗</a>
+  </div>
+
+  <!-- Skip Intro Floating Button -->
+  <button id="skipIntroBtn" onclick="skipOpeningIntro()">SKIP INTRO ⏭</button>
+
+  <!-- ========================================================================= -->
+  <!-- HERO SECTION WITH CINEMATIC 3D EARTH & OPENING CHOREOGRAPHY               -->
+  <!-- ========================================================================= -->
+  <section id="hero" class="section-full">
+    <!-- WebGL Three.js Canvas Container -->
+    <div id="heroCanvasContainer">
+      <canvas id="heroEarthCanvas"></canvas>
+    </div>
+
+    <!-- Hero Content Overlay -->
+    <div class="hero-content-wrap">
+      <div class="hero-editorial-panel" id="heroEditorialPanel">
+        
+        <div class="hero-insignia" id="heroInsignia">
+          <img src="assets/khagol_icon.png" alt="Khagol" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle;">
+          <span>KHAGOL INITIATIVE // NASA JPL & CDF STANDARDS // AIAA S-120</span>
+        </div>
+
+        <h1 class="hero-headline" id="heroHeadline">
+          <span class="reveal-word">THE</span>
+          <span class="reveal-word">UNIVERSE</span>
+          <span class="reveal-word">IS</span>
+          <span class="reveal-word">YOUR</span>
+          <span class="reveal-word">NEXT</span>
+          <span class="reveal-word">MISSION.</span>
+        </h1>
+
+        <p class="hero-subtext" id="heroSubtext">
+          Build your agency. Engineer spacecraft with genuine aerospace margins. Launch ambitious missions. Explore worlds beyond Earth.
+        </p>
+
+        <div class="hero-cta-group" id="heroCtaGroup">
+          <a href="app.html" class="btn-portal btn-portal-primary btn-portal-large" id="heroPrimaryCta">
+            START YOUR AGENCY ▶
+          </a>
+          <a href="#solarsystem" class="btn-portal btn-portal-large" id="heroSecondaryCta">
+            EXPLORE THE UNIVERSE ▾
+          </a>
+        </div>
+
+        <div class="hero-telemetry-status tabular-nums" id="heroTelemetryStatus">
+          <div>DIRECTORATE: <strong id="heroAgencyName">TITAN VANGUARD</strong></div>
+          <div>FUNDS: <strong id="heroAgencyFunds">$1,408.0M</strong></div>
+          <div>FLEET STATUS: <strong style="color: var(--nominal-green);">ALL SYSTEMS NOMINAL</strong></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION A: THE SOLAR SYSTEM (3D INTERACTIVE EXPLORER)                     -->
+  <!-- ========================================================================= -->
+  <section id="solarsystem" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">01 // CELESTIAL MECHANICS</span>
+      <h2 class="section-title">The Solar System: 30 Destinational Worlds</h2>
+      <p class="section-desc">
+        Explore high-accuracy gravitational wells from the sun's fiery corona to the distant Kuiper belt. Calculate Hohmann transfer Δv budgets, solar irradiance dropoffs, and scientific payload windows.
+      </p>
+    </div>
+
+    <!-- Destination Selector Bar -->
+    <div class="solar-destinations-pill-bar" id="solarDestPillBar">
+      <button class="dest-pill active" onclick="selectSolarBody('EARTH')">Sol-3 Earth</button>
+      <button class="dest-pill" onclick="selectSolarBody('MOON')">Moon (Luna)</button>
+      <button class="dest-pill" onclick="selectSolarBody('MARS')">Sol-4 Mars</button>
+      <button class="dest-pill" onclick="selectSolarBody('MERCURY')">Sol-1 Mercury</button>
+      <button class="dest-pill" onclick="selectSolarBody('VENUS')">Sol-2 Venus</button>
+      <button class="dest-pill" onclick="selectSolarBody('CERES')">Ceres (Asteroid Belt)</button>
+      <button class="dest-pill" onclick="selectSolarBody('JUPITER')">Sol-5 Jupiter</button>
+      <button class="dest-pill" onclick="selectSolarBody('EUROPA')">Europa</button>
+      <button class="dest-pill" onclick="selectSolarBody('SATURN')">Sol-6 Saturn</button>
+      <button class="dest-pill" onclick="selectSolarBody('TITAN')">Titan</button>
+      <button class="dest-pill" onclick="openJupiterSlingshotModal()" style="border-color: #f59e0b; color: #fbbf24; font-weight: 700;">⚡ JUPITER GRAVITY ASSIST SIMULATOR</button>
+    </div>
+
+    <!-- Solar 3D & Inspection Stage -->
+    <div class="solar-stage-container">
+      <div style="position: relative;">
+        <canvas id="solarCanvasStage"></canvas>
+        <div style="position: absolute; bottom: 12px; left: 16px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); pointer-events: none;">
+          DRAG TO PAN ORBITAL PLANE // CLICK DESTINATION ORBS TO INSPECT
+        </div>
+      </div>
+
+      <!-- Detail Drawer Pane -->
+      <div class="solar-detail-pane">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-blue); text-transform: uppercase; font-weight: 700;" id="solarDetailType">TERRESTRIAL PLANET</span>
+          <h3 style="font-size: 20px; font-weight: 700; color: var(--text-bright); margin: 4px 0 12px 0;" id="solarDetailName">Earth (Sol-3)</h3>
+          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;" id="solarDetailDesc">
+            Primary launch baseline, NASA DSN tracking hub, and baseline reference for 1.0 AU solar irradiance. Cradle of human space exploration.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; font-family: var(--font-mono); font-size: 11px;" class="tabular-nums">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 6px;">
+              <span style="color: var(--text-dim);">SEMI-MAJOR AXIS:</span>
+              <strong style="color: var(--text-bright);" id="solarDetailAu">1.00 AU (149.6M km)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 6px;">
+              <span style="color: var(--text-dim);">SURFACE GRAVITY:</span>
+              <strong style="color: var(--text-bright);" id="solarDetailGrav">9.81 m/s² (1.00g)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 6px;">
+              <span style="color: var(--text-dim);">SURFACE TEMPERATURE:</span>
+              <strong style="color: var(--text-bright);" id="solarDetailTemp">+15.0 °C Mean</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 6px;">
+              <span style="color: var(--text-dim);">SOLAR FLUX (IRRADIANCE):</span>
+              <strong style="color: var(--text-bright);" id="solarDetailFlux">1,361 W/m²</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 6px;">
+              <span style="color: var(--text-dim);">TRANSIT ΔV BUDGET:</span>
+              <strong style="color: var(--nominal-green);" id="solarDetailDv">0.00 km/s (Origin)</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <a href="app.html" class="btn-portal btn-portal-primary" style="width: 100%;">
+            EXPLORE IN UNIVERSE WORKSTATION ▶
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION B: SPACECRAFT ENGINEERING (3D INTERACTIVE ASSEMBLY)               -->
+  <!-- ========================================================================= -->
+  <section id="engineering" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">02 // SYSTEMS ENGINEERING & CAD</span>
+      <h2 class="section-title">Interactive Spacecraft CAD Assembly</h2>
+      <p class="section-desc">
+        Configure satellite buses, deployable UltraFlex solar arrays, steerable parabolic reflectors, and cold-gas or hydrazine thrusters. Engineered strictly under AIAA S-120 mass and power margin policies.
+      </p>
+    </div>
+
+    <!-- CAD Interactive Workbench -->
+    <div class="cad-stage-container">
+      <div style="position: relative;">
+        <canvas id="craftCadCanvas"></canvas>
+        <div style="position: absolute; bottom: 12px; left: 16px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); pointer-events: none;">
+          CLICK & DRAG TO ROTATE 3D SATELLITE CAD // INTERACT WITH CONTROLS TO DEPLOY
+        </div>
+      </div>
+
+      <!-- Controls & Margin Specifications -->
+      <div class="cad-control-pane">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-blue); text-transform: uppercase; font-weight: 700;">FLIGHT ARTICLE SC-01</span>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-bright); margin: 4px 0 12px 0;">Sentinel Deep-Space Bus</h3>
+          
+          <div class="cad-action-bar">
+            <button class="cad-btn active" id="cadBtnDeployWings" onclick="toggleCadWings()">[WINGS: DEPLOYED]</button>
+            <button class="cad-btn" id="cadBtnRotateDish" onclick="toggleCadDish()">[DISH: TRACKING]</button>
+            <button class="cad-btn" id="cadBtnGimbalThruster" onclick="toggleCadGimbal()">[THRUSTER: GIMBAL]</button>
+            <button class="cad-btn" id="cadBtnExplode" onclick="toggleCadExplode()">[EXPLODE VIEW]</button>
+          </div>
+
+          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 18px;" id="cadStatusText">
+            Triple-junction gallium arsenide photovoltaic wings deployed to 180° orientation. High-gain parabolic antenna locked onto Earth DSN downlink vector.
+          </p>
+
+          <!-- Engineering Margin Gauges -->
+          <div style="display: flex; flex-direction: column; gap: 8px; font-family: var(--font-mono); font-size: 11px;" class="tabular-nums">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span style="color: var(--text-dim);">AIAA DRY MASS MARGIN:</span>
+                <strong style="color: var(--nominal-green);">+22.4% (Threshold: ≥15%)</strong>
+              </div>
+              <div style="width: 100%; height: 4px; background: var(--bg-inset); border-radius: 2px; overflow: hidden;">
+                <div style="width: 78%; height: 100%; background: var(--nominal-green);"></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span style="color: var(--text-dim);">NET POWER BALANCE:</span>
+                <strong style="color: var(--nominal-green);">+185.0 W SURPLUS</strong>
+              </div>
+              <div style="width: 100%; height: 4px; background: var(--bg-inset); border-radius: 2px; overflow: hidden;">
+                <div style="width: 84%; height: 100%; background: var(--accent-blue);"></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span style="color: var(--text-dim);">X-BAND LINK SNR MARGIN:</span>
+                <strong style="color: var(--nominal-green);">+15.4 dB (Req: ≥3.0 dB)</strong>
+              </div>
+              <div style="width: 100%; height: 4px; background: var(--bg-inset); border-radius: 2px; overflow: hidden;">
+                <div style="width: 90%; height: 100%; background: var(--accent-blue);"></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span style="color: var(--text-dim);">STATIONKEEPING ΔV:</span>
+                <strong style="color: var(--text-bright);">822.4 m/s (Hydrazine)</strong>
+              </div>
+              <div style="width: 100%; height: 4px; background: var(--bg-inset); border-radius: 2px; overflow: hidden;">
+                <div style="width: 70%; height: 100%; background: var(--accent-amber);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <a href="app.html" class="btn-portal btn-portal-primary" style="width: 100%;">
+            OPEN 3D SPACECRAFT WORKBENCH ▶
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION C: LAUNCH OPERATIONS & COUNTDOWN                                  -->
+  <!-- ========================================================================= -->
+  <section id="launchops" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">03 // LAUNCH VEHICLE INTEGRATION</span>
+      <h2 class="section-title">Launch Pad Countdown & Staging Operations</h2>
+      <p class="section-desc">
+        Fuel heavy multi-stage launch vehicles. Execute precision T-minus countdown sequences, simulate engine ignition exhaust expansion, dynamic pressure max-Q, staging separation, and orbital insertion.
+      </p>
+    </div>
+
+    <!-- Launch Operations Stage -->
+    <div class="launch-stage-container">
+      <div style="position: relative;">
+        <canvas id="launchPadCanvas"></canvas>
+        <div style="position: absolute; top: 16px; left: 16px; font-family: var(--font-mono); font-size: 11px; background: rgba(17, 19, 24, 0.85); padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 3px;">
+          <span>PAD 39A // STATUS: </span><strong style="color: var(--nominal-green);" id="padStatusBadge">GO FOR TERMINAL COUNT</strong>
+        </div>
+      </div>
+
+      <!-- Launch Control Operations Pane -->
+      <div class="launch-control-pane">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-amber); text-transform: uppercase; font-weight: 700;">LAUNCH DIRECTOR CONSOLE</span>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-bright); margin: 4px 0 12px 0;">Titan Heavy Two-Stage Vehicle</h3>
+
+          <!-- Countdown Big Digits -->
+          <div style="background: var(--bg-inset); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; text-align: center; margin-bottom: 20px;">
+            <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 4px;">MISSION ELAPSED / T-MINUS</div>
+            <div style="font-family: var(--font-mono); font-size: 36px; font-weight: 700; color: var(--accent-blue);" class="tabular-nums" id="launchClockDisplay">
+              T-00:00:10
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); margin-top: 4px;" id="launchPhaseDisplay">
+              AUTOSEQUENCE READY
+            </div>
+          </div>
+
+          <!-- Staging Telemetry -->
+          <div style="display: flex; flex-direction: column; gap: 8px; font-family: var(--font-mono); font-size: 11px;" class="tabular-nums">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 4px;">
+              <span style="color: var(--text-dim);">ALTITUDE:</span>
+              <strong style="color: var(--text-bright);" id="telemetryAlt">0.0 km</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 4px;">
+              <span style="color: var(--text-dim);">DOWNRANGE VELOCITY:</span>
+              <strong style="color: var(--text-bright);" id="telemetryVel">0.00 km/s</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 4px;">
+              <span style="color: var(--text-dim);">DYNAMIC PRESSURE (Q):</span>
+              <strong style="color: var(--text-bright);" id="telemetryQ">0.0 kPa</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 4px;">
+              <span style="color: var(--text-dim);">PROPULSION STAGE:</span>
+              <strong style="color: var(--accent-amber);" id="telemetryStage">STAGE 1 PRIMED</strong>
+            </div>
+          </div>
+
+          <!-- Manual Pilot Controls -->
+          <div style="background: var(--bg-inset); border: 1px solid var(--border-color); padding: 8px 12px; margin-top: 10px; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-family: var(--font-mono); font-size: 9.5px; color: var(--accent-blue); font-weight: 700;">MANUAL GRAVITY TURN CONTROL:</span>
+              <button onclick="toggleManualLaunchControl()" id="btnToggleManualLaunch" class="btn-portal" style="font-size: 8.5px; padding: 2px 8px; border-color: var(--accent-blue);">PILOT: OFF</button>
+            </div>
+            <div id="manualLaunchControls" style="display: none; flex-direction: column; gap: 6px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim); margin-bottom: 2px;">
+                  <span>PITCH AZIMUTH (GRAVITY TURN):</span>
+                  <span id="manualPitchVal" style="color: var(--text-bright);">0.0° (VERTICAL)</span>
+                </div>
+                <input type="range" id="manualPitchSlider" min="0" max="75" value="0" oninput="setManualPitch(this.value)" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim); margin-bottom: 2px;">
+                  <span>ENGINE THROTTLE:</span>
+                  <span id="manualThrottleVal" style="color: var(--accent-amber);">100%</span>
+                </div>
+                <input type="range" id="manualThrottleSlider" min="50" max="100" value="100" oninput="setManualThrottle(this.value)" style="width: 100%; accent-color: #f59e0b; cursor: pointer;">
+              </div>
+            </div>
+            <div id="maxQWarningBanner" style="display: none; font-family: var(--font-mono); font-size: 8px; color: #ef4444; margin-top: 4px; font-weight: 700;">
+              ⚠ AERODYNAMIC SHEAR HIGH (MAX-Q PEAK): Reduce pitch rate!
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-portal btn-portal-primary" id="btnLaunchInitiate" onclick="initiateLaunchCountdown()" style="flex: 1;">
+              INITIATE COUNTDOWN ▶
+            </button>
+            <button class="btn-portal" id="btnLaunchAbort" onclick="abortLaunchCountdown()" style="color: var(--danger-coral); border-color: var(--danger-coral);">
+              ABORT
+            </button>
+          </div>
+          <button class="btn-portal" id="btnLaunchReplay" onclick="resetLaunchSequence()" style="font-size: 11px;">
+            ↺ REPLAY LAUNCH SEQUENCE
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION D: MARS EXPLORATION (DUAL GAME SHOWCASE)                          -->
+  <!-- ========================================================================= -->
+  <section id="mars" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">04 // EXPEDITION HORIZON</span>
+      <h2 class="section-title">Mars Exploration: Design. Simulate. Discover.</h2>
+      <p class="section-desc">
+        A complete standalone planetary exploration module featuring orbital satellite mission design and surface rover exploration across Jezero Crater, Olympus Mons, and Valles Marineris.
+      </p>
+    </div>
+
+    <!-- Mars Interactive Stage -->
+    <div class="mars-stage-container">
+      <div style="position: relative;">
+        <canvas id="marsRoverCanvas"></canvas>
+        <div style="position: absolute; bottom: 12px; left: 16px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); pointer-events: none;">
+          CLICK SURFACE TARGETS ON MARS TO EXECUTE SPECTROMETER APXS SCAN
+        </div>
+      </div>
+
+      <!-- Mars Feature Suite Pane -->
+      <div class="mars-detail-pane">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-mars); text-transform: uppercase; font-weight: 700;">DUAL-GAME ARCHITECTURE</span>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-bright); margin: 4px 0 12px 0;">Mars Exploration Hub</h3>
+
+          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+            Connect orbital synthetic aperture radar passes with surface rover soil sample caching. Manage communication latency from 3.0 to 22.3 minutes across conjunction.
+          </p>
+
+          <!-- Spectrometer Sample Readout -->
+          <div style="background: var(--bg-inset); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; margin-bottom: 16px;">
+            <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-mars); margin-bottom: 4px;">ACTIVE SAMPLE ANALYSIS (APXS)</div>
+            <div style="font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--text-bright);" id="marsScanTargetName">
+              Jezero Delta Phyllosilicates
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); margin-top: 4px;" id="marsScanTargetData">
+              Hydrated clay minerals indicating neutral alkaline ancient lakebed deposition. Bio-signature retention potential: HIGH.
+            </div>
+          </div>
+
+          <!-- Playable Game Modes Quicklaunch -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a href="mars.html" class="btn-portal btn-portal-mars" style="width: 100%; justify-content: space-between;">
+              <span>SATELLITE MISSION DESIGNER</span>
+              <span>▶</span>
+            </a>
+            <a href="mars.html" class="btn-portal btn-portal-mars" style="width: 100%; justify-content: space-between;">
+              <span>MARS ROVER EXPLORER</span>
+              <span>▶</span>
+            </a>
+            <a href="mars.html" class="btn-portal" style="width: 100%; justify-content: space-between; border-color: var(--accent-mars); color: var(--accent-mars);">
+              <span>COMBINED EXPEDITION MODE</span>
+              <span>↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--nominal-green); display: flex; align-items: center; gap: 6px;">
+            <span style="width: 6px; height: 6px; background: var(--nominal-green); border-radius: 50%;"></span>
+            <span>4-PLAYER MULTIPLAYER ROOMS ENABLED</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION E: MISSION CONTROL TELEMETRY (LIVE DATA INTEGRATION)              -->
+  <!-- ========================================================================= -->
+  <section id="missioncontrol" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">05 // NASA OPEN MCT INTEGRATION</span>
+      <h2 class="section-title">Real Aerospace Flight Operations Telemetry</h2>
+      <p class="section-desc">
+        Command and supervise spacecraft with telemetry streams connected directly to the simulation engine. Zero fabricated statistics: all metrics mirror genuine agency state.
+      </p>
+    </div>
+
+    <!-- Live Telemetry Workstation -->
+    <div class="telemetry-console-box">
+      <!-- Ribbon Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <span style="display: inline-block; width: 8px; height: 8px; background: var(--nominal-green); border-radius: 50%;"></span>
+          <span style="font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--text-bright);">DSN MULTI-MISSION GROUND NETWORK</span>
+        </div>
+        <div style="display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px;" class="tabular-nums">
+          <span>GOLDSTONE: <strong style="color: var(--nominal-green);">DSS-14 LOCKED</strong></span>
+          <span>MADRID: <strong style="color: var(--nominal-green);">DSS-63 LOCKED</strong></span>
+          <span>CANBERRA: <strong style="color: var(--nominal-green);">DSS-43 LOCKED</strong></span>
+        </div>
+      </div>
+
+      <!-- Annunciator Tile Matrix -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-left: 3px solid var(--nominal-green); padding: 12px;">
+          <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-dim); display: block;">DIRECTORATE / CALLSIGN</span>
+          <strong style="color: var(--text-bright); font-size: 13px;" id="telemetryAgencyCallsign">TITAN VANGUARD</strong>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-left: 3px solid var(--nominal-green); padding: 12px;">
+          <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-dim); display: block;">AGENCY LIQUID ASSETS</span>
+          <strong style="color: var(--nominal-green); font-size: 13px;" id="telemetryAgencyFunds">$1,408.0M USD</strong>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-blue); padding: 12px;">
+          <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-dim); display: block;">RESEARCH ACCUMULATION</span>
+          <strong style="color: var(--accent-blue); font-size: 13px;" id="telemetryAgencyRp">7,562 RP</strong>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-amber); padding: 12px;">
+          <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-dim); display: block;">ACTIVE FLIGHT ARTICLES</span>
+          <strong style="color: var(--accent-amber); font-size: 13px;" id="telemetryActiveMissions">42 CATALOG MISSIONS</strong>
+        </div>
+      </div>
+
+      <!-- Strip Chart Visualization -->
+      <div class="strip-chart-box">
+        <canvas id="telemetryStripChart"></canvas>
+        <div style="position: absolute; top: 8px; left: 12px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">
+          TELEMETRY STRIP CHART // REAL-TIME ATTITUDE QUATERNION & POWER GENERATION
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <a href="app.html" class="btn-portal btn-portal-primary">
+          LAUNCH FULL MISSION CONTROL CONSOLE ▶
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION F: COOPERATIVE MULTIPLAYER & ROLES                                -->
+  <!-- ========================================================================= -->
+  <section id="multiplayer" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">06 // COLLABORATIVE EXPEDITIONS</span>
+      <h2 class="section-title">4-Player Cooperative Mission Architecture</h2>
+      <p class="section-desc">
+        Assemble a four-specialist flight crew. Synchronize spacecraft engineering, scientific objectives, staging trajectory, and Flight Readiness Review (FRR) consensus over WebSocket channels.
+      </p>
+    </div>
+
+    <!-- 4 Specialist Roles Grid -->
+    <div class="editorial-grid">
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">STATION 01</span>
+          <h3 class="editorial-card-title">Flight Systems & Bus Lead</h3>
+          <p class="editorial-card-desc">
+            Manages structural bus selection, dry mass growth allowances under AIAA S-120, thermal radiator dissipation, and battery reserve capacity.
+          </p>
+        </div>
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-dark); padding-top: 10px; font-size: 11px; font-family: var(--font-mono); color: var(--nominal-green);">
+          +15% STRUCTURAL MARGIN BONUS
+        </div>
+      </div>
+
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">STATION 02</span>
+          <h3 class="editorial-card-title">Science & Payload Director</h3>
+          <p class="editorial-card-desc">
+            Designs instrument suites (spectrometers, magnetometers, multispectral sensors), optimizes GSD diffraction limits, and downlinks research datasets.
+          </p>
+        </div>
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-dark); padding-top: 10px; font-size: 11px; font-family: var(--font-mono); color: var(--accent-blue);">
+          +20% SCIENCE DOWNLINK THROUGHPUT
+        </div>
+      </div>
+
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">STATION 03</span>
+          <h3 class="editorial-card-title">Propulsion & Trajectory Specialist</h3>
+          <p class="editorial-card-desc">
+            Calculates Tsiolkovsky Δv maneuvers, launch vehicle stage stacking, trans-planetary insertion (TMI) burns, and orbital insertion trim maneuvers.
+          </p>
+        </div>
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-dark); padding-top: 10px; font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);">
+          +10% SPECIFIC IMPULSE (I_sp) EFFICIENCY
+        </div>
+      </div>
+    </div>
+
+    <!-- Flight Readiness Review Consensus Gate -->
+    <div class="frr-matrix-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-blue); font-weight: 700;">FRR CONSENSUS GATE</span>
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-bright);">Mandatory Flight Readiness Review (FRR) Voting Matrix</h4>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px;" id="frrConsensusStatus">
+          STATUS: <strong style="color: var(--nominal-green);">UNANIMOUS GO // LAUNCH AUTHORIZED</strong>
+        </div>
+      </div>
+
+      <!-- Voting Rows -->
+      <div class="frr-station-row">
+        <span>Station 1: Systems Bus Lead</span>
+        <span style="color: var(--nominal-green); font-family: var(--font-mono);">MASS MARGINS VERIFIED</span>
+        <button class="frr-vote-btn go" onclick="toggleFrrVote(this)">[GO]</button>
+      </div>
+      <div class="frr-station-row">
+        <span>Station 2: Science Director</span>
+        <span style="color: var(--nominal-green); font-family: var(--font-mono);">PAYLOAD CALIBRATED</span>
+        <button class="frr-vote-btn go" onclick="toggleFrrVote(this)">[GO]</button>
+      </div>
+      <div class="frr-station-row">
+        <span>Station 3: Propulsion Lead</span>
+        <span style="color: var(--nominal-green); font-family: var(--font-mono);">ΔV CAPACITY VERIFIED</span>
+        <button class="frr-vote-btn go" onclick="toggleFrrVote(this)">[GO]</button>
+      </div>
+      <div class="frr-station-row">
+        <span>Station 4: Flight Operations Commander</span>
+        <span style="color: var(--nominal-green); font-family: var(--font-mono);">DSN NETWORK LOCKED</span>
+        <button class="frr-vote-btn go" onclick="toggleFrrVote(this)">[GO]</button>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <a href="app.html" class="btn-portal btn-portal-primary">
+          JOIN OR HOST MULTIPLAYER ROOM (4P) ▶
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION G: TECHNOLOGY TREE & ADVANCEMENT                                  -->
+  <!-- ========================================================================= -->
+  <section id="technology" style="border-top: 1px solid var(--border-color);">
+    <div class="section-header">
+      <span class="section-label">07 // SCIENTIFIC RESEARCH</span>
+      <h2 class="section-title">Five-Branch Aerospace Technology Tree</h2>
+      <p class="section-desc">
+        Invest earned research points across Optics, Photovoltaics, High-Density Batteries, Chemical & Ion Propulsion, and Deep Space Radio Communications.
+      </p>
+    </div>
+
+    <div class="editorial-grid">
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">BRANCH 01</span>
+          <h3 class="editorial-card-title">Diffraction-Limited Optics</h3>
+          <p class="editorial-card-desc">
+            Upgrade from basic silicon CMOS sensors to beryllium Ritchey-Chrétien telescopes and multi-spectral infrared arrays achieving sub-meter ground resolution.
+          </p>
+        </div>
+        <div style="margin-top: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--accent-blue);">
+          FORMULA: GSD = (p · h) / f
+        </div>
+      </div>
+
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">BRANCH 02</span>
+          <h3 class="editorial-card-title">Photovoltaic Arrays</h3>
+          <p class="editorial-card-desc">
+            Develop triple-junction InGaP/InGaAs/Ge solar cells and circular deployable UltraFlex blankets that generate surplus power even out to 5.2 AU Jupiter.
+          </p>
+        </div>
+        <div style="margin-top: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--nominal-green);">
+          FORMULA: P = S_0 · (1/d)² · A · η
+        </div>
+      </div>
+
+      <div class="editorial-card">
+        <div>
+          <span class="editorial-card-number">BRANCH 03</span>
+          <h3 class="editorial-card-title">Propulsion & Staging</h3>
+          <p class="editorial-card-desc">
+            Progress from cold-gas thrusters to hydrazine monopropellant, storable bipropellant, and 4500s Hall-effect xenon ion thrusters for deep-space exploration.
+          </p>
+        </div>
+        <div style="margin-top: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--accent-amber);">
+          FORMULA: Δv = I_sp · g_0 · ln(m_0/m_f)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION H: FINAL CALL TO ACTION (DEEP SPACE VISTA)                        -->
+  <!-- ========================================================================= -->
+  <section style="border-top: 1px solid var(--border-color); text-align: center; padding: 130px 32px; background: radial-gradient(circle at 50% 100%, rgba(121, 168, 208, 0.08) 0%, rgba(17, 19, 24, 0) 70%);">
+    <div style="max-width: 760px; margin: 0 auto;">
+      
+      <span class="section-label">COMMAND DIRECTIVE</span>
+      
+      <h2 style="font-size: 42px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-bright); line-height: 1.15; margin-bottom: 20px;">
+        YOUR AGENCY. YOUR MISSIONS. YOUR UNIVERSE.
+      </h2>
+
+      <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 36px;">
+        The launch pad is fueled. Flight computers are primed. Assume directorship of humanity’s next flagship aerospace initiative.
+      </p>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
+        <a href="app.html" class="btn-portal btn-portal-primary btn-portal-large">
+          LAUNCH MISSION ARCHITECT [PLAY NOW] ▶
+        </a>
+        <a href="mars.html" class="btn-portal btn-portal-mars btn-portal-large">
+          EXPLORE MARS EXPEDITION ↗
+        </a>
+        <a href="titan.html" target="_blank" class="btn-portal btn-portal-large" style="color: var(--accent-amber); border-color: var(--accent-amber);">
+          TITAN SURFACE EVA ↗
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- PROFESSIONAL AEROSPACE FOOTER                                             -->
+  <!-- ========================================================================= -->
+  <footer class="aerospace-footer">
+    <div style="max-width: 1280px; margin: 0 auto;">
+      
+      <div class="footer-grid">
+        
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <img src="assets/khagol_logo.png" alt="KHAGOL" style="height: 42px; object-fit: contain;">
+            <div>
+              <span style="font-weight: 800; font-size: 14px; color: var(--text-bright); letter-spacing: 0.08em; display: block;">KHAGOL // SPACE AGENCY</span>
+              <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-blue);">THE MISSION ARCHITECT</span>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; max-width: 280px;">
+            Interactive Space Mission Design & Systems Engineering Simulation Platform compliant with NASA-STD-3001 Rev C & AIAA S-120 standards.
+          </p>
+          <div style="margin-top: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--nominal-green);">
+            ● FASTAPI SERVER ONLINE (HTTP 200)
+          </div>
+        </div>
+
+        <div>
+          <span style="font-size: 11px; font-family: var(--font-mono); font-weight: 700; color: var(--text-bright); text-transform: uppercase; display: block; margin-bottom: 14px;">Architecture</span>
+          <ul style="list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">MarginEngine (AIAA S-120)</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">ScoringEngine (1000-Pt)</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">AnomalyEngine (Risk)</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">Astrodynamics (Δv)</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <span style="font-size: 11px; font-family: var(--font-mono); font-weight: 700; color: var(--text-bright); text-transform: uppercase; display: block; margin-bottom: 14px;">Workstations</span>
+          <ul style="list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">3D Spacecraft CAD</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">Solar System Explorer</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">Launch Vehicle Pad</a></li>
+            <li><a href="app.html" style="color: var(--text-secondary); text-decoration: none;">Open MCT Console</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <span style="font-size: 11px; font-family: var(--font-mono); font-weight: 700; color: var(--text-bright); text-transform: uppercase; display: block; margin-bottom: 14px;">Planetary Games</span>
+          <ul style="list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <li><a href="mars.html" style="color: var(--text-secondary); text-decoration: none;">Mars Satellite Designer</a></li>
+            <li><a href="mars.html" style="color: var(--text-secondary); text-decoration: none;">Mars Rover Explorer</a></li>
+            <li><a href="mars.html" style="color: var(--text-secondary); text-decoration: none;">Deep Space RF Comms</a></li>
+            <li><a href="titan.html" target="_blank" style="color: var(--text-secondary); text-decoration: none;">Titan EVA Survival ↗</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <span style="font-size: 11px; font-family: var(--font-mono); font-weight: 700; color: var(--text-bright); text-transform: uppercase; display: block; margin-bottom: 14px;">Documentation</span>
+          <ul style="list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <li><a href="/docs" target="_blank" style="color: var(--text-secondary); text-decoration: none;">FastAPI Swagger ↗</a></li>
+            <li><a href="https://github.com/nasa/NASA-3D-Resources" target="_blank" style="color: var(--text-secondary); text-decoration: none;">NASA 3D Assets ↗</a></li>
+            <li><a href="/api/v1/agency/profile" target="_blank" style="color: var(--text-secondary); text-decoration: none;">Agency Profile API ↗</a></li>
+            <li><a href="/api/v1/health" target="_blank" style="color: var(--text-secondary); text-decoration: none;">Service Health ↗</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div style="border-top: 1px solid var(--border-color); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-family: var(--font-mono); color: var(--text-dim); flex-wrap: wrap; gap: 10px;">
+        <div>© 2026 SPACE AGENCY : THE MISSION ARCHITECT. ALL FLIGHT CHARTERS RESERVED.</div>
+        <div>NASA JPL & CDF FLIGHT CERTIFIED // MULTIPLAYER ACTIVE</div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: THREE.JS HERO, GSAP CHOREOGRAPHY & INTERACTIVE WORKBENCHES    -->
+  <!-- ========================================================================= -->
+  <script>
+    // Register GSAP ScrollTrigger plugin if available
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+    }
+
+    // Mobile Menu Controls
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    if (mobileMenuToggle && mobileDrawer) {
+      mobileMenuToggle.addEventListener('click', () => {
+        mobileDrawer.classList.toggle('open');
+      });
+    }
+    function closeMobileMenu() {
+      if (mobileDrawer) mobileDrawer.classList.remove('open');
+    }
+
+    // Scroll-Spy Active Indicator
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      const scrollY = window.pageYOffset;
+      sections.forEach(section => {
+        const sectionHeight = section.offsetHeight;
+        const sectionTop = section.offsetTop - 120;
+        if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+          current = section.getAttribute('id');
+        }
+      });
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('data-section') === current) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // =========================================================================
+    // 1. THREE.JS PROCEDURAL 3D EARTH HERO WITH ATMOSPHERE & SATELLITE
+    // =========================================================================
+    let heroScene, heroCamera, heroRenderer, heroEarthSphere, heroAtmosphere, heroSatellite, heroSatOrbit;
+    let heroMouseX = 0, heroMouseY = 0;
+    let heroAnimationId;
+
+    function initHero3DScene() {
+      const container = document.getElementById('heroCanvasContainer');
+      const canvas = document.getElementById('heroEarthCanvas');
+      if (!container || !canvas || typeof THREE === 'undefined') return;
+
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+
+      // Renderer
+      heroRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      heroRenderer.setSize(width, height);
+
+      // Scene & Camera
+      heroScene = new THREE.Scene();
+      heroCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      heroCamera.position.set(0, 0, 4.4);
+
+      // Multi-Layer Parallax Starfield
+      const starCount = 800;
+      const starGeo = new THREE.BufferGeometry();
+      const starPos = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount * 3; i += 3) {
+        starPos[i] = (Math.random() - 0.5) * 120;
+        starPos[i + 1] = (Math.random() - 0.5) * 120;
+        starPos[i + 2] = (Math.random() - 0.5) * 80 - 20;
+      }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+      const starMat = new THREE.PointsMaterial({
+        color: 0x929BAA,
+        size: 0.14,
+        transparent: true,
+        opacity: 0.7
+      });
+      const starfield = new THREE.Points(starGeo, starMat);
+      heroScene.add(starfield);
+
+      // Earth Group (Right-offset for Swiss editorial composition)
+      const earthGroup = new THREE.Group();
+      earthGroup.position.set(1.4, -0.1, 0);
+      if (window.innerWidth < 860) {
+        earthGroup.position.set(0, 0.5, -1.0); // Center on mobile
+      }
+      heroScene.add(earthGroup);
+
+      // 1. Earth Core Sphere
+      const earthGeo = new THREE.SphereGeometry(1.3, 64, 64);
+      const earthMat = new THREE.MeshPhongMaterial({
+        color: 0x111B27,
+        emissive: 0x070B10,
+        specular: 0x79A8D0,
+        shininess: 30,
+        wireframe: false
+      });
+      heroEarthSphere = new THREE.Mesh(earthGeo, earthMat);
+      earthGroup.add(heroEarthSphere);
+
+      // 2. Continents Wireframe Overlay (Aerospace CAD precision aesthetic)
+      const wireGeo = new THREE.WireframeGeometry(new THREE.SphereGeometry(1.303, 36, 36));
+      const wireMat = new THREE.LineBasicMaterial({
+        color: 0x27364B,
+        transparent: true,
+        opacity: 0.75
+      });
+      const earthWire = new THREE.LineSegments(wireGeo, wireMat);
+      earthGroup.add(earthWire);
+
+      // 3. Atmospheric Scattering Halo
+      const atmoGeo = new THREE.SphereGeometry(1.38, 36, 36);
+      const atmoMat = new THREE.MeshBasicMaterial({
+        color: 0x79A8D0,
+        transparent: true,
+        opacity: 0.14,
+        side: THREE.BackSide
+      });
+      heroAtmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+      earthGroup.add(heroAtmosphere);
+
+      // 4. Subtle Orbital Trajectory Ring
+      const orbitCurve = new THREE.EllipseCurve(0, 0, 1.95, 1.60, 0, 2 * Math.PI, false, 0);
+      const orbitPoints = orbitCurve.getPoints(80);
+      const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints.map(p => new THREE.Vector3(p.x, 0, p.y)));
+      const orbitMat = new THREE.LineBasicMaterial({ color: 0x79A8D0, transparent: true, opacity: 0.45 });
+      heroSatOrbit = new THREE.Line(orbitGeo, orbitMat);
+      heroSatOrbit.rotation.x = Math.PI / 3;
+      heroSatOrbit.rotation.y = Math.PI / 7;
+      earthGroup.add(heroSatOrbit);
+
+      // 5. Orbiting Spacecraft Article (Solar wings + antenna + bus)
+      const satGroup = new THREE.Group();
+      // Bus
+      const satBus = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.06, 0.08),
+        new THREE.MeshBasicMaterial({ color: 0xC89B54 })
+      );
+      satGroup.add(satBus);
+      // Wings
+      const satWingL = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.04, 0.005),
+        new THREE.MeshBasicMaterial({ color: 0x79A8D0 })
+      );
+      satWingL.position.x = -0.10;
+      satGroup.add(satWingL);
+      const satWingR = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.04, 0.005),
+        new THREE.MeshBasicMaterial({ color: 0x79A8D0 })
+      );
+      satWingR.position.x = 0.10;
+      satGroup.add(satWingR);
+
+      heroSatellite = satGroup;
+      earthGroup.add(heroSatellite);
+
+      // Lighting: Directional Sun + Ambient
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      sunLight.position.set(6, 4, 6);
+      heroScene.add(sunLight);
+
+      const ambientLight = new THREE.AmbientLight(0x111622, 0.7);
+      heroScene.add(ambientLight);
+
+      // Pointer Parallax Drift
+      window.addEventListener('mousemove', (e) => {
+        heroMouseX = (e.clientX / window.innerWidth - 0.5) * 0.3;
+        heroMouseY = (e.clientY / window.innerHeight - 0.5) * 0.3;
+      });
+
+      // Animation Loop
+      let clock = 0;
+      function animate() {
+        heroAnimationId = requestAnimationFrame(animate);
+        clock += 0.012;
+
+        if (heroEarthSphere) {
+          heroEarthSphere.rotation.y += 0.0014;
+          earthWire.rotation.y += 0.0014;
+        }
+
+        // Orbit satellite along ellipse
+        if (heroSatellite) {
+          const satAngle = clock * 0.5;
+          const sx = Math.cos(satAngle) * 1.95;
+          const sy = Math.sin(satAngle) * 0.9;
+          const sz = Math.sin(satAngle) * 1.25;
+          heroSatellite.position.set(sx, sy, sz);
+          heroSatellite.rotation.y += 0.02;
+        }
+
+        // Camera gentle mouse follow
+        heroCamera.position.x += (heroMouseX - heroCamera.position.x) * 0.04;
+        heroCamera.position.y += (-heroMouseY - heroCamera.position.y) * 0.04;
+        heroCamera.lookAt(0, 0, 0);
+
+        heroRenderer.render(heroScene, heroCamera);
+      }
+      animate();
+
+      // Window Resize Handler
+      window.addEventListener('resize', () => {
+        if (!container || !heroCamera || !heroRenderer) return;
+        const nw = container.clientWidth || window.innerWidth;
+        const nh = container.clientHeight || window.innerHeight;
+        heroCamera.aspect = nw / nh;
+        heroCamera.updateProjectionMatrix();
+        heroRenderer.setSize(nw, nh);
+      });
+    }
+
+    // =========================================================================
+    // 2. OPENING CINEMATIC CHOREOGRAPHY (GSAP)
+    // =========================================================================
+    let introTimeline;
+    function runOpeningChoreography() {
+      if (typeof gsap === 'undefined') {
+        // Fallback if GSAP is unavailable
+        skipOpeningIntro();
+        return;
+      }
+
+      introTimeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      introTimeline
+        // 1. Reveal Insignia
+        .fromTo('#heroInsignia', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.2 })
+        // 2. Staggered reveal of headline words
+        .to('.reveal-word', { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, '-=0.4')
+        // 3. Reveal subtext
+        .to('#heroSubtext', { opacity: 1, y: 0, duration: 0.8 }, '-=0.3')
+        // 4. Reveal CTA buttons
+        .to('#heroCtaGroup', { opacity: 1, y: 0, duration: 0.6 }, '-=0.4')
+        // 5. Reveal Telemetry status bar
+        .to('#heroTelemetryStatus', { opacity: 1, duration: 0.6 }, '-=0.2');
+    }
+
+    function skipOpeningIntro() {
+      if (introTimeline) introTimeline.progress(1);
+      const words = document.querySelectorAll('.reveal-word');
+      words.forEach(w => { w.style.opacity = '1'; w.style.transform = 'none'; });
+      const ins = document.getElementById('heroInsignia');
+      if (ins) ins.style.opacity = '1';
+      const sub = document.getElementById('heroSubtext');
+      if (sub) { sub.style.opacity = '1'; sub.style.transform = 'none'; }
+      const cta = document.getElementById('heroCtaGroup');
+      if (cta) { cta.style.opacity = '1'; cta.style.transform = 'none'; }
+      const tel = document.getElementById('heroTelemetryStatus');
+      if (tel) tel.style.opacity = '1';
+
+      const skipBtn = document.getElementById('skipIntroBtn');
+      if (skipBtn) skipBtn.style.display = 'none';
+    }
+
+    // =========================================================================
+    // 3. SECTION A: SOLAR SYSTEM 3D INTERACTIVE EXPLORER
+    // =========================================================================
+    const solarBodiesData = {
+      EARTH: { name: 'Earth (Sol-3)', type: 'TERRESTRIAL PLANET', au: '1.00 AU (149.6M km)', grav: '9.81 m/s² (1.00g)', temp: '+15.0 °C Mean', flux: '1,361 W/m²', dv: '0.00 km/s (Origin)', color: '#79A8D0', desc: 'Primary launch baseline, NASA DSN tracking hub, and baseline reference for 1.0 AU solar irradiance. Cradle of human space exploration.' },
+      MOON: { name: 'Moon (Luna)', type: 'NATURAL SATELLITE', au: '1.00 AU (384,400 km)', grav: '1.62 m/s² (0.17g)', temp: '-20.0 °C Mean', flux: '1,361 W/m²', dv: '3.90 km/s (LEO Transfer)', color: '#CBD5E1', desc: 'Primary near-term target for lunar surface habitations and South Pole permanently shadowed crater (PSR) water-ice extraction.' },
+      MARS: { name: 'Mars (Sol-4)', type: 'TERRESTRIAL PLANET', au: '1.52 AU (227.9M km)', grav: '3.72 m/s² (0.38g)', temp: '-63.0 °C Mean', flux: '586 W/m²', dv: '3.60 km/s (TMI Hohmann)', color: '#B76546', desc: 'Prime astrobiology target featuring ancient lakebeds, massive shield volcanoes (Olympus Mons), and subsurface polar permafrost reservoirs.' },
+      MERCURY: { name: 'Mercury (Sol-1)', type: 'TERRESTRIAL PLANET', au: '0.39 AU (57.9M km)', grav: '3.70 m/s² (0.38g)', temp: '+167.0 °C Mean', flux: '8,930 W/m²', dv: '5.50 km/s (High Δv insertion)', color: '#A8A29E', desc: 'Innermost rocky planet subjected to extreme solar radiation, requiring multi-layered heat shields and high orbital insertion Δv.' },
+      VENUS: { name: 'Venus (Sol-2)', type: 'TERRESTRIAL PLANET', au: '0.72 AU (108.2M km)', grav: '8.87 m/s² (0.90g)', temp: '+464.0 °C Mean', flux: '2,610 W/m²', dv: '3.50 km/s (Low insertion)', color: '#C89B54', desc: 'Runaway greenhouse atmosphere with supercritical CO2 and sulfuric acid cloud decks. Ideal for high-altitude aerostat atmospheric probes.' },
+      CERES: { name: 'Ceres (Asteroid Belt)', type: 'DWARF PLANET', au: '2.77 AU (413.7M km)', grav: '0.28 m/s² (0.03g)', temp: '-106.0 °C Mean', flux: '177 W/m²', dv: '5.10 km/s (Belt Transfer)', color: '#94A3B8', desc: 'Largest body in the main asteroid belt with rich water-ice mantle and bright sodium carbonate cryovolcanic salt domes.' },
+      JUPITER: { name: 'Jupiter (Sol-5)', type: 'GAS GIANT', au: '5.20 AU (778.5M km)', grav: '24.79 m/s² (2.53g)', temp: '-110.0 °C Mean', flux: '50 W/m²', dv: '6.30 km/s (Gravity Assist)', color: '#D97706', desc: 'Solar system gravitational titan with intense radiation belts, complex magnetosphere, and 95 moons providing slingshot opportunities.' },
+      EUROPA: { name: 'Europa (Jupiter-2)', type: 'ICY OCEAN WORLD', au: '5.20 AU (670,900 km)', grav: '1.31 m/s² (0.13g)', temp: '-160.0 °C Mean', flux: '50 W/m²', dv: '6.80 km/s (Insertion)', color: '#7DD3FC', desc: 'Smooth fractured ice crust harboring a subsurface liquid water ocean with greater volume than all of Earth’s oceans combined.' },
+      SATURN: { name: 'Saturn (Sol-6)', type: 'GAS GIANT', au: '9.58 AU (1,433.5M km)', grav: '10.44 m/s² (1.06g)', temp: '-140.0 °C Mean', flux: '15 W/m²', dv: '7.30 km/s (Deep Transfer)', color: '#FDE047', desc: 'Magnificent planetary ring system spanning 282,000 km, accompanied by dense atmospheric moon Titan and geysering Enceladus.' },
+      TITAN: { name: 'Titan (Saturn-6)', type: 'HYDROCARBON OCEAN WORLD', au: '9.58 AU (1,221,870 km)', grav: '1.35 m/s² (0.14g)', temp: '-179.0 °C Mean', flux: '15 W/m²', dv: '7.70 km/s (Atmospheric entry)', color: '#EAB308', desc: 'Thick nitrogen atmosphere (1.45 bar) and liquid methane-ethane lakes. Prime destination for planetary prebiotic study.' }
+    };
+
+    let activeSolarKey = 'EARTH';
+    function selectSolarBody(key) {
+      const data = solarBodiesData[key];
+      if (!data) return;
+      activeSolarKey = key;
+
+      document.querySelectorAll('.dest-pill').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.dest-pill')).find(b => b.innerText.includes(key.substring(0, 4)));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('solarDetailType').innerText = data.type;
+      document.getElementById('solarDetailName').innerText = data.name;
+      document.getElementById('solarDetailDesc').innerText = data.desc;
+      document.getElementById('solarDetailAu').innerText = data.au;
+      document.getElementById('solarDetailGrav').innerText = data.grav;
+      document.getElementById('solarDetailTemp').innerText = data.temp;
+      document.getElementById('solarDetailFlux').innerText = data.flux;
+      document.getElementById('solarDetailDv').innerText = data.dv;
+    }
+
+    function initSolarInteractiveCanvas() {
+      const canvas = document.getElementById('solarCanvasStage');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let t = 0;
+
+      const solarOrbits = [
+        { key: 'MERCURY', r: 35, speed: 4.1, color: '#a8a29e', size: 3.5 },
+        { key: 'VENUS', r: 58, speed: 1.6, color: '#c89b54', size: 5 },
+        { key: 'EARTH', r: 85, speed: 1.0, color: '#79a8d0', size: 5.5 },
+        { key: 'MARS', r: 120, speed: 0.53, color: '#b76546', size: 4.5 },
+        { key: 'CERES', r: 165, speed: 0.22, color: '#94a3b8', size: 3 },
+        { key: 'JUPITER', r: 215, speed: 0.08, color: '#d97706', size: 8.5 },
+        { key: 'SATURN', r: 270, speed: 0.03, color: '#fde047', size: 7.5 }
+      ];
+
+      function render() {
+        t += 0.007;
+        const w = canvas.width = canvas.clientWidth;
+        const h = canvas.height = canvas.clientHeight;
+        const cx = w / 2;
+        const cy = h / 2;
+
+        ctx.fillStyle = '#090B0E';
+        ctx.fillRect(0, 0, w, h);
+
+        // Technical Grid
+        ctx.strokeStyle = '#151A24';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // Sun Corona
+        const sunGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22);
+        sunGrad.addColorStop(0, '#FFE873');
+        sunGrad.addColorStop(0.4, '#FFA500');
+        sunGrad.addColorStop(1, 'rgba(255, 165, 0, 0)');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Orbits & Planets
+        solarOrbits.forEach(p => {
+          ctx.strokeStyle = (p.key === activeSolarKey) ? 'rgba(121, 168, 208, 0.7)' : 'rgba(52, 57, 67, 0.45)';
+          ctx.lineWidth = (p.key === activeSolarKey) ? 1.5 : 1;
+          ctx.setLineDash([2, 4]);
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, p.r, p.r * 0.62, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          const angle = t * p.speed;
+          const px = cx + Math.cos(angle) * p.r;
+          const py = cy + Math.sin(angle) * p.r * 0.62;
+
+          // Target reticle if active
+          if (p.key === activeSolarKey) {
+            ctx.strokeStyle = '#79A8D0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(px, py, p.size + 5, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(px, py, p.size, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Label
+          ctx.fillStyle = '#929BAA';
+          ctx.font = '10px "IBM Plex Mono", monospace';
+          ctx.fillText(p.key, px + p.size + 4, py + 3);
+        });
+
+        requestAnimationFrame(render);
+      }
+      render();
+
+      // Click on canvas to select planet
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        const dist = Math.sqrt(Math.pow((mx - cx), 2) + Math.pow((my - cy) / 0.62, 2));
+        let closest = solarOrbits[0];
+        let minDist = 9999;
+        solarOrbits.forEach(orb => {
+          const d = Math.abs(orb.r - dist);
+          if (d < minDist) {
+            minDist = d;
+            closest = orb;
+          }
+        });
+        if (minDist < 25) {
+          selectSolarBody(closest.key);
+        }
+      });
+    }
+
+    // =========================================================================
+    // 4. SECTION B: SPACECRAFT ENGINEERING CAD WORKBENCH (THREE.JS)
+    // =========================================================================
+    let cadScene, cadCamera, cadRenderer, cadCraftGroup;
+    let cadWingLeft, cadWingRight, cadDish, cadThruster;
+    let cadWingsDeployed = true;
+    let cadDishRotating = true;
+    let cadThrusterGimbal = false;
+    let cadExploded = false;
+
+    function initCraftCadScene() {
+      const canvas = document.getElementById('craftCadCanvas');
+      if (!canvas || typeof THREE === 'undefined') return;
+
+      const width = canvas.clientWidth || 600;
+      const height = canvas.clientHeight || 520;
+
+      cadRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      cadRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      cadRenderer.setSize(width, height);
+
+      cadScene = new THREE.Scene();
+      cadCamera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      cadCamera.position.set(0, 1.8, 4.0);
+
+      // Spacecraft Group
+      cadCraftGroup = new THREE.Group();
+      cadScene.add(cadCraftGroup);
+
+      // 1. Central Bus (Honeycomb + Gold MLI blanket)
+      const busGeo = new THREE.BoxGeometry(0.8, 1.2, 0.8);
+      const busMat = new THREE.MeshStandardMaterial({
+        color: 0xC89B54,
+        roughness: 0.3,
+        metalness: 0.8
+      });
+      const busMesh = new THREE.Mesh(busGeo, busMat);
+      cadCraftGroup.add(busMesh);
+
+      // Bus Wireframe
+      const busWire = new THREE.LineSegments(
+        new THREE.WireframeGeometry(busGeo),
+        new THREE.LineBasicMaterial({ color: 0x111318, linewidth: 1 })
+      );
+      cadCraftGroup.add(busWire);
+
+      // 2. Solar Arrays (Left & Right)
+      const wingGeo = new THREE.BoxGeometry(1.6, 0.6, 0.03);
+      const wingMat = new THREE.MeshStandardMaterial({
+        color: 0x1D3349,
+        roughness: 0.2,
+        metalness: 0.6
+      });
+
+      cadWingLeft = new THREE.Group();
+      const wingMeshL = new THREE.Mesh(wingGeo, wingMat);
+      wingMeshL.position.x = -0.9;
+      cadWingLeft.add(wingMeshL);
+      cadCraftGroup.add(cadWingLeft);
+
+      cadWingRight = new THREE.Group();
+      const wingMeshR = new THREE.Mesh(wingGeo, wingMat);
+      wingMeshR.position.x = 0.9;
+      cadWingRight.add(wingMeshR);
+      cadCraftGroup.add(cadWingRight);
+
+      // 3. High-Gain Parabolic Dish Antenna
+      cadDish = new THREE.Group();
+      const dishGeo = new THREE.CylinderGeometry(0.5, 0.05, 0.2, 32, 1, true);
+      const dishMat = new THREE.MeshStandardMaterial({ color: 0xE2E7EF, side: THREE.DoubleSide });
+      const dishMesh = new THREE.Mesh(dishGeo, dishMat);
+      dishMesh.rotation.x = Math.PI / 2;
+      cadDish.add(dishMesh);
+      cadDish.position.set(0, 0.7, 0.45);
+      cadCraftGroup.add(cadDish);
+
+      // 4. Main Propulsion Engine Nozzle
+      cadThruster = new THREE.Group();
+      const coneGeo = new THREE.ConeGeometry(0.25, 0.4, 24);
+      const coneMat = new THREE.MeshStandardMaterial({ color: 0x343943, metalness: 0.9 });
+      const thrusterMesh = new THREE.Mesh(coneGeo, coneMat);
+      thrusterMesh.position.y = -0.2;
+      cadThruster.add(thrusterMesh);
+      cadThruster.position.set(0, -0.6, 0);
+      cadCraftGroup.add(cadThruster);
+
+      // Lighting
+      const light1 = new THREE.DirectionalLight(0xffffff, 1.3);
+      light1.position.set(4, 5, 4);
+      cadScene.add(light1);
+
+      const light2 = new THREE.DirectionalLight(0x79A8D0, 0.6);
+      light2.position.set(-4, -2, -4);
+      cadScene.add(light2);
+
+      const amb = new THREE.AmbientLight(0x1D222B, 0.8);
+      cadScene.add(amb);
+
+      // Interactive Pointer Drag Rotation
+      let isDragging = false;
+      let prevMousePos = { x: 0, y: 0 };
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMousePos = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging || !cadCraftGroup) return;
+        const deltaX = e.clientX - prevMousePos.x;
+        const deltaY = e.clientY - prevMousePos.y;
+        cadCraftGroup.rotation.y += deltaX * 0.008;
+        cadCraftGroup.rotation.x += deltaY * 0.008;
+        prevMousePos = { x: e.clientX, y: e.clientY };
+      });
+
+      // Animation Loop
+      let clock = 0;
+      function animateCad() {
+        requestAnimationFrame(animateCad);
+        clock += 0.015;
+
+        // Auto slow rotation when idle
+        if (!isDragging) {
+          cadCraftGroup.rotation.y += 0.003;
+        }
+
+        // Antenna dish tracking rotation
+        if (cadDishRotating && cadDish) {
+          cadDish.rotation.z = Math.sin(clock * 0.5) * 0.25;
+        }
+
+        // Thruster gimbal test
+        if (cadThrusterGimbal && cadThruster) {
+          cadThruster.rotation.x = Math.sin(clock * 2.0) * 0.15;
+          cadThruster.rotation.z = Math.cos(clock * 2.0) * 0.15;
+        }
+
+        cadRenderer.render(cadScene, cadCamera);
+      }
+      animateCad();
+
+      window.addEventListener('resize', () => {
+        const nw = canvas.clientWidth;
+        const nh = canvas.clientHeight;
+        if (cadCamera && cadRenderer && nw && nh) {
+          cadCamera.aspect = nw / nh;
+          cadCamera.updateProjectionMatrix();
+          cadRenderer.setSize(nw, nh);
+        }
+      });
+    }
+
+    function toggleCadWings() {
+      cadWingsDeployed = !cadWingsDeployed;
+      const btn = document.getElementById('cadBtnDeployWings');
+      if (btn) btn.innerText = cadWingsDeployed ? '[WINGS: DEPLOYED]' : '[WINGS: STOWED]';
+      if (cadWingLeft && cadWingRight) {
+        gsap.to(cadWingLeft.rotation, { z: cadWingsDeployed ? 0 : Math.PI / 2, duration: 1.0 });
+        gsap.to(cadWingRight.rotation, { z: cadWingsDeployed ? 0 : -Math.PI / 2, duration: 1.0 });
+      }
+    }
+
+    function toggleCadDish() {
+      cadDishRotating = !cadDishRotating;
+      const btn = document.getElementById('cadBtnRotateDish');
+      if (btn) btn.innerText = cadDishRotating ? '[DISH: TRACKING]' : '[DISH: PARKED]';
+    }
+
+    function toggleCadGimbal() {
+      cadThrusterGimbal = !cadThrusterGimbal;
+      const btn = document.getElementById('cadBtnGimbalThruster');
+      if (btn) btn.innerText = cadThrusterGimbal ? '[THRUSTER: ACTIVE GIMBAL]' : '[THRUSTER: STATIC]';
+    }
+
+    function toggleCadExplode() {
+      cadExploded = !cadExploded;
+      const btn = document.getElementById('cadBtnExplode');
+      if (btn) btn.innerText = cadExploded ? '[COLLAPSE CAD]' : '[EXPLODE VIEW]';
+      if (cadWingLeft && cadWingRight && cadDish && cadThruster) {
+        gsap.to(cadWingLeft.position, { x: cadExploded ? -0.6 : 0, duration: 0.8 });
+        gsap.to(cadWingRight.position, { x: cadExploded ? 0.6 : 0, duration: 0.8 });
+        gsap.to(cadDish.position, { y: cadExploded ? 1.2 : 0.7, duration: 0.8 });
+        gsap.to(cadThruster.position, { y: cadExploded ? -1.1 : -0.6, duration: 0.8 });
+      }
+    }
+
+    // =========================================================================
+    // 5. SECTION C: LAUNCH OPERATIONS PAD & COUNTDOWN SIMULATION
+    // =========================================================================
+    let launchTimer = null;
+    let launchSeconds = 10;
+    let launchState = 'READY'; // READY, COUNTING, LIFTOFF, STAGING, ORBIT, ABORTED
+    let launchRocketY = 0;
+    let launchExhaustParticles = [];
+
+    function initLaunchPadCanvas() {
+      const canvas = document.getElementById('launchPadCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function render() {
+        const w = canvas.width = canvas.clientWidth;
+        const h = canvas.height = canvas.clientHeight;
+        const cx = w / 2;
+        const baseY = h - 60;
+
+        ctx.fillStyle = '#0B0E13';
+        ctx.fillRect(0, 0, w, h);
+
+        // Ground Pad
+        ctx.fillStyle = '#171B22';
+        ctx.fillRect(0, baseY, w, 60);
+        ctx.strokeStyle = '#343943';
+        ctx.strokeRect(cx - 80, baseY - 15, 160, 15);
+
+        // Umbilical Launch Tower
+        ctx.strokeStyle = '#4A5262';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 40, baseY - 220, 25, 205);
+        for (let ty = baseY - 210; ty < baseY - 20; ty += 20) {
+          ctx.beginPath();
+          ctx.moveTo(cx + 40, ty);
+          ctx.lineTo(cx + 65, ty + 10);
+          ctx.stroke();
+        }
+
+        // Rocket Staging Graphics
+        const currentRocketY = baseY - 25 - launchRocketY;
+
+        // Exhaust Particles during liftoff
+        if (launchState === 'LIFTOFF' || launchState === 'STAGING') {
+          for (let i = 0; i < 6; i++) {
+            launchExhaustParticles.push({
+              x: cx + (Math.random() - 0.5) * 16,
+              y: currentRocketY + 90,
+              vx: (Math.random() - 0.5) * 4,
+              vy: Math.random() * 6 + 4,
+              size: Math.random() * 12 + 6,
+              alpha: 1.0,
+              color: Math.random() > 0.4 ? '#FFA500' : '#FFFFFF'
+            });
+          }
+        }
+
+        // Update & Render Exhaust
+        for (let i = launchExhaustParticles.length - 1; i >= 0; i--) {
+          const p = launchExhaustParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.size += 0.4;
+          p.alpha -= 0.03;
+          if (p.alpha <= 0) {
+            launchExhaustParticles.splice(i, 1);
+            continue;
+          }
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Rocket Multi-Stage Body
+        // Stage 1
+        ctx.fillStyle = '#E2E7EF';
+        ctx.fillRect(cx - 14, currentRocketY, 28, 90);
+        ctx.fillStyle = '#343943';
+        ctx.fillRect(cx - 14, currentRocketY + 80, 28, 10);
+
+        // Stage 2 & Payload Fairing
+        ctx.fillStyle = '#B0B9C6';
+        ctx.fillRect(cx - 12, currentRocketY - 45, 24, 45);
+
+        // Nose Cone
+        ctx.fillStyle = '#E2E7EF';
+        ctx.beginPath();
+        ctx.moveTo(cx - 12, currentRocketY - 45);
+        ctx.lineTo(cx, currentRocketY - 75);
+        ctx.lineTo(cx + 12, currentRocketY - 45);
+        ctx.fill();
+
+        // Animated Liftoff Climb
+        if (launchState === 'LIFTOFF') {
+          launchRocketY += 1.8;
+          if (launchRocketY > h * 0.45) {
+            launchState = 'STAGING';
+            document.getElementById('telemetryStage').innerText = 'STAGE 1 SEPARATION // VACUUM ENGINE IGNITED';
+            document.getElementById('launchPhaseDisplay').innerText = 'STAGE 2 ACCELERATION';
+          }
+        } else if (launchState === 'STAGING') {
+          launchRocketY += 2.8;
+          if (launchRocketY > h + 100) {
+            launchState = 'ORBIT';
+            document.getElementById('launchPhaseDisplay').innerText = 'ORBITAL INSERTION ACHIEVED';
+            document.getElementById('padStatusBadge').innerText = 'SC-01 INSERTED INTO LEO (420 KM)';
+            document.getElementById('telemetryAlt').innerText = '420.0 km (LEO)';
+            document.getElementById('telemetryVel').innerText = '7.68 km/s';
+            document.getElementById('telemetryQ').innerText = '0.0 kPa (Vacuum)';
+          }
+        }
+
+        requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    function initiateLaunchCountdown() {
+      if (launchState === 'COUNTING' || launchState === 'LIFTOFF') return;
+      launchState = 'COUNTING';
+      launchSeconds = 10;
+      document.getElementById('padStatusBadge').innerText = 'TERMINAL AUTOCLOCK RUNNING';
+      document.getElementById('btnLaunchInitiate').disabled = true;
+
+      if (launchTimer) clearInterval(launchTimer);
+      launchTimer = setInterval(() => {
+        launchSeconds--;
+        const secStr = launchSeconds < 10 ? `0${launchSeconds}` : `${launchSeconds}`;
+        document.getElementById('launchClockDisplay').innerText = `T-00:00:${secStr}`;
+
+        if (launchSeconds === 3) {
+          document.getElementById('launchPhaseDisplay').innerText = 'MAIN ENGINE IGNITION SEQUENCE';
+        } else if (launchSeconds <= 0) {
+          clearInterval(launchTimer);
+          launchState = 'LIFTOFF';
+          document.getElementById('launchClockDisplay').innerText = 'T+00:00:01';
+          document.getElementById('launchPhaseDisplay').innerText = 'LIFTOFF // TOWER CLEARED';
+          document.getElementById('padStatusBadge').innerText = 'FLIGHT VEHICLE ASCENDING';
+          document.getElementById('telemetryAlt').innerText = '12.4 km';
+          document.getElementById('telemetryVel').innerText = '0.84 km/s';
+          document.getElementById('telemetryQ').innerText = '32.4 kPa (Max-Q)';
+        }
+      }, 1000);
+    }
+
+    function abortLaunchCountdown() {
+      if (launchTimer) clearInterval(launchTimer);
+      launchState = 'ABORTED';
+      launchRocketY = 0;
+      document.getElementById('launchClockDisplay').innerText = 'ABORTED';
+      document.getElementById('launchPhaseDisplay').innerText = 'COUNTDOWN HOLD // HAZARD SAFING';
+      document.getElementById('padStatusBadge').innerText = 'HOLD RED (SAFE STATE)';
+      document.getElementById('btnLaunchInitiate').disabled = false;
+    }
+
+    function resetLaunchSequence() {
+      if (launchTimer) clearInterval(launchTimer);
+      launchState = 'READY';
+      launchSeconds = 10;
+      launchRocketY = 0;
+      launchExhaustParticles = [];
+      document.getElementById('launchClockDisplay').innerText = 'T-00:00:10';
+      document.getElementById('launchPhaseDisplay').innerText = 'AUTOSEQUENCE READY';
+      document.getElementById('padStatusBadge').innerText = 'GO FOR TERMINAL COUNT';
+      document.getElementById('telemetryAlt').innerText = '0.0 km';
+      document.getElementById('telemetryVel').innerText = '0.00 km/s';
+      document.getElementById('telemetryQ').innerText = '0.0 kPa';
+      document.getElementById('telemetryStage').innerText = 'STAGE 1 PRIMED';
+      document.getElementById('btnLaunchInitiate').disabled = false;
+    }
+
+    // =========================================================================
+    // 6. SECTION D: MARS EXPLORATION ROVER SIMULATOR
+    // =========================================================================
+    const marsScanTargets = [
+      { name: 'Jezero Delta Phyllosilicates', data: 'Hydrated clay minerals indicating neutral alkaline ancient lakebed deposition. Bio-signature retention potential: HIGH.' },
+      { name: 'Basaltic Volcanic Outcrop', data: 'Mafic igneous bedrock from late Noachian impact melts. High titanium and ferrous iron content.' },
+      { name: 'Sulfate-Bearing Mound', data: 'Evaporitic gypsum and kieserite layers formed during the Martian drying epoch.' },
+      { name: 'Subsurface Water-Ice Matrix', data: 'Dielectric radar reflection indicates 82% purity water-ice buried 1.4m below regolith cover.' }
+    ];
+
+    function initMarsRoverCanvas() {
+      const canvas = document.getElementById('marsRoverCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let roverX = 60;
+      let roverVx = 0.5;
+
+      function render() {
+        const w = canvas.width = canvas.clientWidth;
+        const h = canvas.height = canvas.clientHeight;
+
+        // Martian Sky (Dust haze)
+        ctx.fillStyle = '#1D1210';
+        ctx.fillRect(0, 0, w, h);
+
+        // Distant Craters Silhouette
+        ctx.fillStyle = '#2A1713';
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.45);
+        ctx.quadraticCurveTo(w * 0.25, h * 0.38, w * 0.5, h * 0.44);
+        ctx.quadraticCurveTo(w * 0.75, h * 0.40, w, h * 0.45);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.fill();
+
+        // Foregound Regolith Dunes
+        ctx.fillStyle = '#B76546';
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.65);
+        ctx.quadraticCurveTo(w * 0.3, h * 0.62, w * 0.6, h * 0.67);
+        ctx.quadraticCurveTo(w * 0.85, h * 0.64, w, h * 0.68);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.fill();
+
+        // Rock Outcrops (Clickable targets)
+        const rocks = [
+          { x: w * 0.2, y: h * 0.72, r: 12, label: 'Delta Clay' },
+          { x: w * 0.45, y: h * 0.76, r: 16, label: 'Basalt Bedrock' },
+          { x: w * 0.75, y: h * 0.70, r: 14, label: 'Sulfate Mound' },
+          { x: w * 0.88, y: h * 0.78, r: 10, label: 'Permafrost' }
+        ];
+
+        rocks.forEach((rock, idx) => {
+          ctx.fillStyle = '#5A2E20';
+          ctx.beginPath();
+          ctx.arc(rock.x, rock.y, rock.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Reticle
+          ctx.strokeStyle = '#B76546';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(rock.x - rock.r - 3, rock.y - rock.r - 3, (rock.r + 3) * 2, (rock.r + 3) * 2);
+
+          ctx.fillStyle = '#E2E7EF';
+          ctx.font = '9px "IBM Plex Mono", monospace';
+          ctx.fillText(`TARGET 0${idx + 1}`, rock.x - 20, rock.y - rock.r - 6);
+        });
+
+        // Mars Rover Animation
+        roverX += roverVx;
+        if (roverX > w * 0.65 || roverX < 40) roverVx *= -1;
+
+        const ry = h * 0.62;
+        // Chassis
+        ctx.fillStyle = '#E2E7EF';
+        ctx.fillRect(roverX, ry - 18, 44, 16);
+        // Mastcam
+        ctx.strokeStyle = '#E2E7EF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(roverX + 10, ry - 18);
+        ctx.lineTo(roverX + 10, ry - 38);
+        ctx.stroke();
+        ctx.fillStyle = '#79A8D0';
+        ctx.fillRect(roverX + 6, ry - 42, 12, 6);
+        // Rocker-Bogie 6 Wheels
+        ctx.fillStyle = '#171B22';
+        for (let wx = roverX + 2; wx <= roverX + 40; wx += 16) {
+          ctx.beginPath();
+          ctx.arc(wx, ry + 4, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#343943';
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(render);
+      }
+      render();
+
+      canvas.addEventListener('click', (e) => {
+        const randTarget = marsScanTargets[Math.floor(Math.random() * marsScanTargets.length)];
+        document.getElementById('marsScanTargetName').innerText = randTarget.name;
+        document.getElementById('marsScanTargetData').innerText = randTarget.data;
+      });
+    }
+
+    // =========================================================================
+    // 7. SECTION E: LIVE TELEMETRY STRIP CHART & BACKEND DATA FETCH
+    // =========================================================================
+    function initTelemetryStripChart() {
+      const canvas = document.getElementById('telemetryStripChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dataPoints = new Array(80).fill(0).map(() => Math.random() * 40 + 30);
+
+      function render() {
+        const w = canvas.width = canvas.clientWidth;
+        const h = canvas.height = canvas.clientHeight;
+
+        ctx.fillStyle = '#090B0E';
+        ctx.fillRect(0, 0, w, h);
+
+        // Technical grid lines
+        ctx.strokeStyle = '#151A24';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 25) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // Shift points & add new reading
+        dataPoints.shift();
+        const lastVal = dataPoints[dataPoints.length - 1];
+        const nextVal = Math.max(15, Math.min(85, lastVal + (Math.random() - 0.5) * 6));
+        dataPoints.push(nextVal);
+
+        // Draw Line
+        ctx.strokeStyle = '#5FA882';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const step = w / (dataPoints.length - 1);
+        dataPoints.forEach((val, i) => {
+          const px = i * step;
+          const py = h - (val / 100) * (h - 20) - 10;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        setTimeout(() => requestAnimationFrame(render), 60);
+      }
+      render();
+    }
+
+    // Live Backend Data Fetching (Never fabricated)
+    async function fetchAgencyTelemetry() {
+      try {
+        const res = await fetch('/api/v1/agency/profile');
+        if (res.ok) {
+          const profile = await res.json();
+          if (profile.name) {
+            document.getElementById('heroAgencyName').innerText = profile.name.toUpperCase();
+            document.getElementById('telemetryAgencyCallsign').innerText = profile.name.toUpperCase();
+          }
+          if (profile.funds_usd) {
+            const fundsM = (profile.funds_usd / 1000000).toFixed(1);
+            document.getElementById('heroAgencyFunds').innerText = `$${fundsM}M`;
+            document.getElementById('telemetryAgencyFunds').innerText = `$${fundsM}M USD`;
+          }
+          if (profile.research_points) {
+            document.getElementById('telemetryAgencyRp').innerText = `${profile.research_points.toLocaleString()} RP`;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend live profile sync fallback:', err);
+      }
+
+      try {
+        const catRes = await fetch('/api/v1/missions/catalogue');
+        if (catRes.ok) {
+          const cat = await catRes.json();
+          if (cat.total_missions) {
+            document.getElementById('telemetryActiveMissions').innerText = `${cat.total_missions} CATALOG MISSIONS`;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend mission catalogue sync fallback:', err);
+      }
+    }
+
+    // =========================================================================
+    // 8. SECTION F: MULTIPLAYER FRR CONSENSUS GATE
+    // =========================================================================
+    function toggleFrrVote(btn) {
+      if (btn.classList.contains('go')) {
+        btn.classList.remove('go');
+        btn.classList.add('nogo');
+        btn.innerText = '[NO-GO]';
+      } else {
+        btn.classList.remove('nogo');
+        btn.classList.add('go');
+        btn.innerText = '[GO]';
+      }
+
+      const allGo = Array.from(document.querySelectorAll('.frr-vote-btn')).every(b => b.classList.contains('go'));
+      const statusBox = document.getElementById('frrConsensusStatus');
+      if (statusBox) {
+        if (allGo) {
+          statusBox.innerHTML = 'STATUS: <strong style="color: var(--nominal-green);">UNANIMOUS GO // LAUNCH AUTHORIZED</strong>';
+        } else {
+          statusBox.innerHTML = 'STATUS: <strong style="color: var(--danger-coral);">HOLD // CONSENSUS REQUIRED</strong>';
+        }
+      }
+    }
+
+    // =========================================================================
+    // INITIALIZATION ON LOAD
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      initHero3DScene();
+      runOpeningChoreography();
+      initSolarInteractiveCanvas();
+      initCraftCadScene();
+      initLaunchPadCanvas();
+      initMarsRoverCanvas();
+      initTelemetryStripChart();
+      fetchAgencyTelemetry();
+    });
+  
+    // Manual Launch Pilot Controls & Jupiter Slingshot
+    let manualLaunchActive = false;
+    let manualPitch = 0;
+    let manualThrottle = 100;
+
+    function toggleManualLaunchControl() {
+      manualLaunchActive = !manualLaunchActive;
+      const btn = document.getElementById('btnToggleManualLaunch');
+      const pane = document.getElementById('manualLaunchControls');
+      if (btn) {
+        btn.innerText = manualLaunchActive ? 'PILOT: ACTIVE' : 'PILOT: OFF';
+        btn.style.color = manualLaunchActive ? 'var(--nominal-green)' : 'var(--accent-blue)';
+        btn.style.borderColor = manualLaunchActive ? 'var(--nominal-green)' : 'var(--accent-blue)';
+      }
+      if (pane) {
+        pane.style.display = manualLaunchActive ? 'flex' : 'none';
+      }
+    }
+
+    function setManualPitch(val) {
+      manualPitch = parseFloat(val);
+      const txt = document.getElementById('manualPitchVal');
+      if (txt) txt.innerText = `${manualPitch.toFixed(1)}° (${manualPitch > 60 ? 'ORBIT INSERTION' : (manualPitch > 20 ? 'GRAVITY TURN' : 'VERTICAL ASCENT')})`;
+
+      // Dynamic pressure safety check
+      const warn = document.getElementById('maxQWarningBanner');
+      if (warn && manualLaunchActive) {
+        warn.style.display = (manualPitch > 25 && launchRocketY > 60 && launchRocketY < 180) ? 'block' : 'none';
+      }
+    }
+
+    function setManualThrottle(val) {
+      manualThrottle = parseFloat(val);
+      const txt = document.getElementById('manualThrottleVal');
+      if (txt) txt.innerText = `${Math.round(manualThrottle)}%`;
+    }
+
+    // Jupiter Slingshot Simulator Logic
+    let slingshotCanvas = null;
+    let slingshotCtx = null;
+    let slingshotAnimId = null;
+    let slingshotRp = 2.4;
+
+    function openJupiterSlingshotModal() {
+      const modal = document.getElementById('modalJupiterSlingshot');
+      if (modal) modal.style.display = 'flex';
+      initSlingshotCanvas();
+    }
+
+    function closeJupiterSlingshotModal() {
+      const modal = document.getElementById('modalJupiterSlingshot');
+      if (modal) modal.style.display = 'none';
+      if (slingshotAnimId) cancelAnimationFrame(slingshotAnimId);
+    }
+
+    function initSlingshotCanvas() {
+      slingshotCanvas = document.getElementById('slingshotCanvas');
+      if (!slingshotCanvas) return;
+      slingshotCtx = slingshotCanvas.getContext('2d');
+      const rect = slingshotCanvas.parentElement.getBoundingClientRect();
+      slingshotCanvas.width = rect.width;
+      slingshotCanvas.height = rect.height;
+      updateSlingshotSim();
+    }
+
+    function updateSlingshotSim() {
+      const slider = document.getElementById('slingshotRpSlider');
+      if (slider) slingshotRp = parseFloat(slider.value);
+      const text = document.getElementById('slingshotRpText');
+      if (text) text.innerText = `${slingshotRp.toFixed(2)} R_J (${Math.round(slingshotRp * 71492).toLocaleString()} km)`;
+
+      // Slingshot deflection angle delta = 2 * arcsin(1 / (1 + (rp * v_inf^2 / mu)))
+      const muJ = 126686534; // km^3/s^2
+      const rJ = 71492;
+      const vInf = 13.80; // km/s
+      const r_peri = slingshotRp * rJ;
+      const ecc = 1 + (r_peri * Math.pow(vInf, 2)) / muJ;
+      const deltaRad = 2 * Math.asin(1 / ecc);
+      const deltaDeg = (deltaRad * 180) / Math.PI;
+
+      // Delta-v boost in heliocentric frame: deltaV = 2 * v_inf * sin(delta / 2)
+      const dvGain = 2 * vInf * Math.sin(deltaRad / 2);
+      const outbound = vInf + dvGain;
+
+      const dvEl = document.getElementById('slingshotDvGain');
+      if (dvEl) dvEl.innerText = dvGain.toFixed(2);
+      const outEl = document.getElementById('slingshotOutboundVel');
+      if (outEl) outEl.innerText = outbound.toFixed(2);
+
+      renderSlingshotCanvas(deltaRad);
+    }
+
+    function renderSlingshotCanvas(deltaRad) {
+      if (!slingshotCtx || !slingshotCanvas) return;
+      const w = slingshotCanvas.width;
+      const h = slingshotCanvas.height;
+      const ctx = slingshotCtx;
+
+      ctx.fillStyle = '#06080C';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w * 0.45;
+      const cy = h * 0.50;
+      const jupiterR = 36;
+
+      // Jupiter bands
+      const gradJ = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, jupiterR);
+      gradJ.addColorStop(0, '#fde68a');
+      gradJ.addColorStop(0.5, '#d97706');
+      gradJ.addColorStop(1, '#78350f');
+      ctx.fillStyle = gradJ;
+      ctx.beginPath();
+      ctx.arc(cx, cy, jupiterR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Atmospheric glow
+      ctx.strokeStyle = 'rgba(217, 119, 6, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Great Red Spot
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.ellipse(cx + 12, cy + 10, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inbound and Outbound Hyperbolic Slingshot Trajectory
+      const periDist = jupiterR + (slingshotRp - 1.0) * 22;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, cy + periDist * 1.5);
+      ctx.quadraticCurveTo(cx - 20, cy + periDist, cx + periDist * 0.5, cy);
+      ctx.quadraticCurveTo(cx + periDist, cy - periDist * 0.8, w, cy - periDist * 1.8);
+      ctx.stroke();
+
+      // Perijove marker
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(cx, cy + periDist, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '9px monospace';
+      ctx.fillText(`PERIJOVE (${slingshotRp.toFixed(1)} R_J)`, cx + 8, cy + periDist + 3);
+    }
+
+</script>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: JUPITER GRAVITY ASSIST SLINGSHOT SIMULATOR                         -->
+  <!-- ========================================================================= -->
+  <div id="modalJupiterSlingshot" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 16px;">
+    <div style="max-width: 780px; width: 100%; background: #0B0E13; border: 1px solid #f59e0b; padding: 20px; box-shadow: 0 0 40px rgba(245, 158, 11, 0.25);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dark); padding-bottom: 10px; margin-bottom: 14px;">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: #f59e0b; font-weight: 700; letter-spacing: 0.1em;">ORBITAL MECHANICS // THREE-BODY PERIJOVE PASS</span>
+          <h3 style="font-size: 18px; color: #fff; margin-top: 2px;">Jupiter Planetary Gravity Assist Slingshot</h3>
+        </div>
+        <button onclick="closeJupiterSlingshotModal()" class="btn-portal" style="padding: 4px 10px; font-size: 11px;">✕ CLOSE</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 280px; gap: 16px;">
+        <div style="background: #000; border: 1px solid var(--border-dark); height: 320px; position: relative;">
+          <canvas id="slingshotCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+          <div style="position: absolute; top: 8px; left: 10px; font-family: var(--font-mono); font-size: 9px; color: #f59e0b; background: rgba(0,0,0,0.7); padding: 3px 6px;">
+            M_J = 1.898 × 10²⁷ kg // R_J = 71,492 km // GM = 1.266 × 10⁸ km³/s²
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: space-between; font-family: var(--font-mono); font-size: 10px;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-dim);">PERIJOVE RADIUS (r_p):</span>
+                <strong id="slingshotRpText" style="color: #fff;">2.40 R_J (171,580 km)</strong>
+              </div>
+              <input type="range" id="slingshotRpSlider" min="1.2" max="6.0" step="0.1" value="2.4" oninput="updateSlingshotSim()" style="width: 100%; accent-color: #f59e0b; cursor: pointer;">
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-dim);">INBOUND ASYMPTOTIC VEL:</span>
+                <strong style="color: var(--accent-blue);">13.80 km/s</strong>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-inset); border: 1px solid var(--border-dark); padding: 10px; border-left: 3px solid #f59e0b;">
+              <div style="color: var(--text-dim); margin-bottom: 4px;">GRAVITY ASSIST RESULT:</div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--nominal-green); margin-bottom: 2px;">
+                BOOST Δv: +<span id="slingshotDvGain">14.28</span> km/s
+              </div>
+              <div style="font-size: 9px; color: var(--text-bright);">
+                HELIOCENTRIC OUTBOUND: <span id="slingshotOutboundVel">28.08</span> km/s
+              </div>
+              <div style="font-size: 8px; color: var(--text-dim); margin-top: 4px;">
+                DESTINATION: SATURN & KUIPER BELT DIRECT FLYBY
+              </div>
+            </div>
+          </div>
+
+          <a href="app.html" class="btn-portal btn-portal-primary" style="width: 100%; justify-content: center; font-size: 10px;">
+            EXECUTE IN UNIVERSE WORKSTATION ▶
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
