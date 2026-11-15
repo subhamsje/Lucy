@@ -76,6 +76,86 @@ CATALOG = load_catalog()
 RULES = load_rules()
 SCENARIOS = load_scenarios()
 
+from backend.app.api.missions import MISSION_CATALOGUE
+
+def get_scenario_definition(scenario_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    if not scenario_id:
+        return SCENARIOS["scenarios"][0] if SCENARIOS.get("scenarios") else None
+        
+    # 1. Direct match in SCENARIOS
+    sc = next((s for s in SCENARIOS.get("scenarios", []) if s.get("id") == scenario_id), None)
+    if sc:
+        return sc
+        
+    # 2. Match from MISSION_CATALOGUE (the 20 master mission contracts)
+    mission = next((m for m in MISSION_CATALOGUE if m.get("id") == scenario_id), None)
+    if mission:
+        orbit_text = mission.get("target_orbit", "")
+        alt_km = 550.0
+        inc_deg = 97.6
+        if "35,786" in orbit_text or "GEO" in orbit_text:
+            alt_km = 35786.0
+            inc_deg = 0.0
+        elif "km" in orbit_text:
+            try:
+                import re
+                m_alt = re.search(r'(\d+[\d,]*)\s*km', orbit_text)
+                if m_alt:
+                    alt_km = float(m_alt.group(1).replace(',', ''))
+                m_inc = re.search(r'([\d\.]+)°', orbit_text)
+                if m_inc:
+                    inc_deg = float(m_inc.group(1))
+            except Exception:
+                pass
+
+        return {
+            "id": mission["id"],
+            "name": mission.get("name", mission["id"]),
+            "category": mission.get("category", "EARTH_OBSERVATION"),
+            "difficulty": mission.get("difficulty", "SPECIALIST"),
+            "target_destination": mission.get("destination", "Earth Orbit"),
+            "mission_objective": mission.get("description", "Execute scientific observation objectives."),
+            "scientific_requirements": {
+                "primary_data_threshold_gb": mission.get("science_threshold_gb", 450.0),
+                "target_metrics": {}
+            },
+            "orbit_trajectory_options": [
+                {
+                    "name": mission.get("target_orbit", "Nominal Mission Orbit"),
+                    "orbit_type": "Mission Orbit",
+                    "altitude_km": alt_km,
+                    "inclination_deg": inc_deg,
+                    "eccentricity": 0.001,
+                    "delta_v_insertion_ms": 120.0,
+                    "pros": "Prescribed operational trajectory.",
+                    "cons": "Standard space environmental exposure."
+                }
+            ],
+            "required_spacecraft_capabilities": {
+                "min_pointing_accuracy_deg": 0.05,
+                "min_delta_v_ms": 80.0,
+                "mandatory_subsystems": [
+                    "SCIENTIFIC_INSTRUMENT",
+                    "ELECTRICAL_POWER",
+                    "COMMUNICATION_ANTENNA",
+                    "DATA_STORAGE",
+                    "ATTITUDE_CONTROL"
+                ]
+            },
+            "mission_duration_days": mission.get("mission_lifetime_days", 180),
+            "budget_cap_usd": mission.get("budget_usd", 35000000.0),
+            "launch_constraints": {
+                "compatible_launch_classes": ["MICRO_LAUNCHER", "RIDESHARE_ESPA", "MEDIUM_LIFT", "HEAVY_LIFT"],
+                "launch_window_frequency_days": 1.0,
+                "launcher_max_capacity_kg": mission.get("max_spacecraft_mass_kg", 5000.0)
+            }
+        }
+        
+    # 3. Fallback to default scenario
+    if SCENARIOS.get("scenarios"):
+        return SCENARIOS["scenarios"][0]
+    return None
+
 # In-memory session store
 SAVED_DESIGNS: Dict[str, Any] = {}
 SIMULATION_RESULTS: Dict[str, Any] = {}
@@ -104,7 +184,7 @@ def get_scenarios():
 
 @app.post("/api/v1/spacecraft/validate", response_model=FeasibilityValidationResponse)
 def validate_spacecraft(design: SpacecraftConfiguration):
-    scenario = next((s for s in SCENARIOS["scenarios"] if s["id"] == design.scenario_id), None)
+    scenario = get_scenario_definition(design.scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
     
@@ -136,7 +216,7 @@ def execute_simulation(req: SimulationExecutionRequest):
     if not cfg:
         raise HTTPException(status_code=400, detail="Missing spacecraft configuration")
 
-    scenario = next((s for s in SCENARIOS["scenarios"] if s["id"] == cfg.scenario_id), None)
+    scenario = get_scenario_definition(cfg.scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
