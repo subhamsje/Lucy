@@ -1,0 +1,1045 @@
+"""
+Modular Mission Catalogue Engine covering all 20 Master Aerospace Categories:
+1. Earth observation
+2. Communication satellites
+3. Weather and climate monitoring
+4. Lunar reconnaissance
+5. Lunar landing
+6. Lunar rover deployment
+7. Lunar sample return
+8. Mars orbiters
+9. Mars landers
+10. Mars rover missions
+11. Asteroid flybys
+12. Asteroid rendezvous
+13. Asteroid sample return
+14. Jupiter exploration
+15. Europa reconnaissance
+16. Saturn observation
+17. Titan exploration
+18. Deep-space observatories
+19. Orbital infrastructure
+20. Collaborative multi-spacecraft missions
+"""
+
+import json
+from typing import Dict, List, Any, Optional
+from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException
+
+router = APIRouter(prefix="/api/v1/missions", tags=["Modular Mission Contracts"])
+
+MISSION_CATALOGUE = [
+    {
+        "id": "MSN-01-EARTH-OBS",
+        "category_index": 1,
+        "category": "EARTH_OBSERVATION",
+        "name": "Sentinel-Optima: High-Res Biosphere & Thermal Early Warning",
+        "destination": "EARTH",
+        "difficulty": "CADET",
+        "budget_usd": 18000000.0,
+        "max_spacecraft_mass_kg": 280.0,
+        "target_orbit": "Sun-Synchronous LEO (550 km, 97.6°)",
+        "mission_lifetime_days": 730,
+        "description": "Deploy a multi-spectral optical and thermal infrared pushbroom imager to map global boreal wildfire fronts and deforested boundaries.",
+        "scientific_objectives": [
+            "Achieve < 15m Ground Sample Distance (GSD)",
+            "Downlink at least 450 GB of multispectral raw imagery",
+            "Maintain continuous thermal telemetry within -15°C to +35°C"
+        ],
+        "required_instruments": ["INST-OPT-01"],
+        "recommended_instruments": ["MEM-FLASH-01", "ANT-X-02"],
+        "power_requirement_w": 45.0,
+        "communication_requirement": "X-Band Direct-to-Earth (Downlink >= 20 Mbps)",
+        "rewards": {"funds_usd": 22000000.0, "research_points": 95, "reputation": 6},
+        "failure_conditions": ["Mass exceeds launcher capacity", "Battery DoD exceeds 60% during 35-min eclipse"]
+    },
+    {
+        "id": "MSN-02-COMMS-GEO",
+        "category_index": 2,
+        "category": "COMMUNICATION_SATELLITES",
+        "name": "Aether-Link: High-Throughput Ka-Band Relay Constellation",
+        "destination": "EARTH",
+        "difficulty": "SPECIALIST",
+        "budget_usd": 45000000.0,
+        "max_spacecraft_mass_kg": 650.0,
+        "target_orbit": "Geostationary Equatorial (GEO 35,786 km, 0.0°)",
+        "mission_lifetime_days": 1825,
+        "description": "Establish a wideband geostationary telecommunications node providing uninterrupted telemetry relay for polar and low-Earth science fleets.",
+        "scientific_objectives": [
+            "Sustain 99.99% communications availability over Pacific & Atlantic gateways",
+            "Continuous multi-gigabit routing using phased-array transceivers"
+        ],
+        "required_instruments": ["ANT-KA-03"],
+        "recommended_instruments": ["OBC-RAD-02", "EPS-SOL-03"],
+        "power_requirement_w": 220.0,
+        "communication_requirement": "Phased-Array Ka-Band Cross-Links",
+        "rewards": {"funds_usd": 58000000.0, "research_points": 140, "reputation": 8},
+        "failure_conditions": ["Pointing error > 0.05°", "Propellant depletion before GEO circularization"]
+    },
+    {
+        "id": "MSN-03-CLIMATE-MET",
+        "category_index": 3,
+        "category": "WEATHER_CLIMATE",
+        "name": "Baro-Storm: Atmospheric Radar & Cyclogenesis Profiler",
+        "destination": "EARTH",
+        "difficulty": "SPECIALIST",
+        "budget_usd": 32000000.0,
+        "max_spacecraft_mass_kg": 420.0,
+        "target_orbit": "Polar LEO (650 km, 98.2°)",
+        "mission_lifetime_days": 1095,
+        "description": "Track Category 5 tropical cyclones, tropospheric water vapor transport, and Antarctic katabatic wind vectors using L-band radar profiling.",
+        "scientific_objectives": [
+            "Capture vertical cloud reflectivity profiles through storm eyewalls",
+            "Transmit 24/7 real-time meteorological weather feeds to NOAA/EUMETSAT"
+        ],
+        "required_instruments": ["INST-SAR-03"],
+        "recommended_instruments": ["EPS-BAT-03", "ADCS-ST-03"],
+        "power_requirement_w": 180.0,
+        "communication_requirement": "X-Band NEN Ground Station Tracking",
+        "rewards": {"funds_usd": 40000000.0, "research_points": 130, "reputation": 7},
+        "failure_conditions": ["Radar antenna deployment mechanism jam", "Structural fatigue in thermal cycling"]
+    },
+    {
+        "id": "MSN-04-LUNAR-RECON",
+        "category_index": 4,
+        "category": "LUNAR_RECONNAISSANCE",
+        "name": "Artemis Herald: Polar Cold-Trap Volatile Mapper",
+        "destination": "MOON",
+        "difficulty": "SPECIALIST",
+        "budget_usd": 38000000.0,
+        "max_spacecraft_mass_kg": 380.0,
+        "target_orbit": "Frozen Polar Lunar Orbit (100 km, 90.0°)",
+        "mission_lifetime_days": 730,
+        "description": "Survey the lunar South Pole (Shackleton, Faustini, Shoemaker craters) for water-ice concentrations in permanently shadowed regions (PSR).",
+        "scientific_objectives": [
+            "Sub-surface hydrogen neutron/radar profiling of polar cold traps",
+            "Laser altimetry mapping of peaks of eternal light for future solar bases"
+        ],
+        "required_instruments": ["INST-SAR-03", "INST-OPT-02"],
+        "recommended_instruments": ["PROP-HYD-02", "ANT-X-02"],
+        "power_requirement_w": 110.0,
+        "communication_requirement": "DSN Deep Space Link (Light delay: 1.3s)",
+        "rewards": {"funds_usd": 48000000.0, "research_points": 160, "reputation": 9},
+        "failure_conditions": ["Lunar gravitational mass concentrations (mascons) destabilize orbit without RCS trim"]
+    },
+    {
+        "id": "MSN-05-LUNAR-LAND",
+        "category_index": 5,
+        "category": "LUNAR_LANDING",
+        "name": "Selene Touchdown: Malapert Mountain Precision Landing",
+        "destination": "MOON",
+        "difficulty": "MASTER",
+        "budget_usd": 65000000.0,
+        "max_spacecraft_mass_kg": 850.0,
+        "target_orbit": "Direct Lunar Descent & Landing",
+        "mission_lifetime_days": 180,
+        "description": "Execute autonomous powered descent and soft touchdown on the rim ridge of Malapert Mountain with hazard avoidance radar.",
+        "scientific_objectives": [
+            "Perform soft landing with touchdown vertical velocity < 1.5 m/s",
+            "Operate stationary seismometer and regolith heat-probe package"
+        ],
+        "required_instruments": ["INST-OPT-02", "PROP-HYD-02"],
+        "recommended_instruments": ["EPS-BAT-03", "OBC-RAD-02"],
+        "power_requirement_w": 140.0,
+        "communication_requirement": "Lunar Relay Orbiter or direct DSN link",
+        "rewards": {"funds_usd": 85000000.0, "research_points": 240, "reputation": 14},
+        "failure_conditions": ["Touchdown velocity exceeds leg structural limit (> 2.5 m/s)", "Landing on > 15° slope"]
+    },
+    {
+        "id": "MSN-06-LUNAR-ROVER",
+        "category_index": 6,
+        "category": "LUNAR_ROVER_DEPLOYMENT",
+        "name": "Peregrine Trek: Shackleton Crater Interior Rover Expedition",
+        "destination": "MOON",
+        "difficulty": "MASTER",
+        "budget_usd": 72000000.0,
+        "max_spacecraft_mass_kg": 920.0,
+        "target_orbit": "Lunar Surface Mobile Deployment",
+        "mission_lifetime_days": 365,
+        "description": "Deploy an autonomous mobile surface rover into the pitch-black cryogenic interior of Shackleton crater (-240°C) using RTG heating.",
+        "scientific_objectives": [
+            "Traverse at least 5.0 km across rugged polar boulder fields",
+            "Core drill 1.0m into cryo-regolith to sample pure volatile water ice"
+        ],
+        "required_instruments": ["INST-OPT-02", "PROP-HYD-02"],
+        "recommended_instruments": ["TCS-PIPE-02", "EPS-BAT-03"],
+        "power_requirement_w": 160.0,
+        "communication_requirement": "Direct-to-Earth S-Band / X-Band High Gain",
+        "rewards": {"funds_usd": 95000000.0, "research_points": 280, "reputation": 16},
+        "failure_conditions": ["Rover battery freeze in permanently shadowed region", "Wheel entrapment in soft electrostatic dust"]
+    },
+    {
+        "id": "MSN-07-LUNAR-SAMPLE",
+        "category_index": 7,
+        "category": "LUNAR_SAMPLE_RETURN",
+        "name": "Chang'e-Pro: South Pole Regolith Cryogenic Return",
+        "destination": "MOON",
+        "difficulty": "MASTER",
+        "budget_usd": 90000000.0,
+        "max_spacecraft_mass_kg": 1200.0,
+        "target_orbit": "Trans-Earth Injection (TEI) Sample Re-entry",
+        "mission_lifetime_days": 90,
+        "description": "Collect 2.0 kg of pristine cryogenic volatiles from the lunar south pole, launch lunar ascent stage, and guide heat-shielded return capsule to Earth.",
+        "scientific_objectives": [
+            "Hermetically seal cryogenic volatile ice core sample at < -150°C",
+            "Survive hypervelocity atmospheric re-entry at 11.2 km/s into Utah Salt Flats"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["STR-ISO-03", "ANT-X-02"],
+        "power_requirement_w": 190.0,
+        "communication_requirement": "DSN 70m Goldstone / Madrid Deep Space tracking",
+        "rewards": {"funds_usd": 125000000.0, "research_points": 380, "reputation": 22},
+        "failure_conditions": ["Ascent stage ignition failure", "Parachute deployment pyro jam on Earth return"]
+    },
+    {
+        "id": "MSN-08-MARS-ORBITER",
+        "category_index": 8,
+        "category": "MARS_ORBITERS",
+        "name": "Ares Observer: Trace Gas & Methane Plume Spectrometry",
+        "destination": "MARS",
+        "difficulty": "SPECIALIST",
+        "budget_usd": 55000000.0,
+        "max_spacecraft_mass_kg": 520.0,
+        "target_orbit": "Sun-Synchronous Mars Orbit (400 km, 93.0°)",
+        "mission_lifetime_days": 1460,
+        "description": "Perform Mars Orbit Insertion (MOI) and aerobraking to map seasonal methane outgassing and sub-surface glacial ice deposits.",
+        "scientific_objectives": [
+            "Perform Trans-Mars Injection (TMI) with 4.3 km/s total Delta-V",
+            "Atmospheric occultation spectrometry profiling parts-per-billion atmospheric trace gases"
+        ],
+        "required_instruments": ["INST-OPT-02", "INST-SAR-03"],
+        "recommended_instruments": ["PROP-ION-03", "ANT-X-02"],
+        "power_requirement_w": 170.0,
+        "communication_requirement": "DSN 34m dishes (One-way light time: 4 to 21 min)",
+        "rewards": {"funds_usd": 72000000.0, "research_points": 260, "reputation": 12},
+        "failure_conditions": ["Overheating during aerobraking pass in upper Martian atmosphere", "Sun-Earth-Mars solar conjunction blackout"]
+    },
+    {
+        "id": "MSN-09-MARS-LANDER",
+        "category_index": 9,
+        "category": "MARS_LANDERS",
+        "name": "Red Planet Seismology: Cerberus Fossae Seismic Observatory",
+        "destination": "MARS",
+        "difficulty": "MASTER",
+        "budget_usd": 85000000.0,
+        "max_spacecraft_mass_kg": 780.0,
+        "target_orbit": "Direct Martian Entry, Descent & Landing (EDL)",
+        "mission_lifetime_days": 730,
+        "description": "Survive hypersonic atmospheric entry with aeroshell heat shield, deploy supersonic parachute, and retro-rocket touchdown in Cerberus Fossae.",
+        "scientific_objectives": [
+            "Deploy ultra-sensitive broadband seismometer onto Martian bedrock",
+            "Detect Marsquakes and measure crustal thickness down to the Martian core"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["TCS-PIPE-02", "EPS-SOL-03"],
+        "power_requirement_w": 180.0,
+        "communication_requirement": "UHF relay via Mars Reconnaissance Orbiter",
+        "rewards": {"funds_usd": 110000000.0, "research_points": 340, "reputation": 18},
+        "failure_conditions": ["Heat shield breach during 5.8 km/s hypersonic entry", "Radar altimeter lockout over boulder terrain"]
+    },
+    {
+        "id": "MSN-10-MARS-ROVER",
+        "category_index": 10,
+        "category": "MARS_ROVER_MISSIONS",
+        "name": "Prometheus: Jezero Delta Astrobiology Rover",
+        "destination": "MARS",
+        "difficulty": "MASTER",
+        "budget_usd": 110000000.0,
+        "max_spacecraft_mass_kg": 1050.0,
+        "target_orbit": "Martian Skycrane Soft Landing",
+        "mission_lifetime_days": 1000,
+        "description": "Utilize a rocket-powered skycrane descent stage to lower a heavy nuclear-powered rover directly into Jezero ancient lake delta.",
+        "scientific_objectives": [
+            "Raman & UV luminescence scan of delta mudstones for ancient fossilized microbial biosignatures",
+            "Collect and seal 15 rock core sample tubes in sterile titanium canisters"
+        ],
+        "required_instruments": ["INST-OPT-02", "INST-SAR-03", "PROP-HYD-02"],
+        "recommended_instruments": ["OBC-RAD-02", "ANT-KA-03"],
+        "power_requirement_w": 250.0,
+        "communication_requirement": "Direct X-Band High-Gain Dish + UHF Orbiter Relay",
+        "rewards": {"funds_usd": 150000000.0, "research_points": 450, "reputation": 25},
+        "failure_conditions": ["Skycrane umbilical tether release failure", "Dust accumulation blinding optical navigation cameras"]
+    },
+    {
+        "id": "MSN-11-ASTEROID-FLYBY",
+        "category_index": 11,
+        "category": "ASTEROID_FLYBYS",
+        "name": "Lucy-Pathfinder: Trojan Asteroid Multi-Target Reconnaissance",
+        "destination": "ASTEROID_BELT",
+        "difficulty": "SPECIALIST",
+        "budget_usd": 48000000.0,
+        "max_spacecraft_mass_kg": 420.0,
+        "target_orbit": "Heliocentric Resonant Flyby Trajectory",
+        "mission_lifetime_days": 2190,
+        "description": "Fly past four Jupiter Trojan asteroids sharing Jupiter's orbit (L4 and L5 swarm) to examine primordial outer solar system composition.",
+        "scientific_objectives": [
+            "Perform high-speed imaging at closest approach (< 1,000 km)",
+            "Measure crater size distributions and volatile organic surface coating"
+        ],
+        "required_instruments": ["INST-OPT-01", "PROP-ION-03"],
+        "recommended_instruments": ["EPS-SOL-03", "ANT-X-02"],
+        "power_requirement_w": 130.0,
+        "communication_requirement": "DSN 34m Beam (Light delay: 25 to 45 min)",
+        "rewards": {"funds_usd": 64000000.0, "research_points": 220, "reputation": 11},
+        "failure_conditions": ["Attitude slew rate too slow during 12 km/s flyby passage"]
+    },
+    {
+        "id": "MSN-12-ASTEROID-RENDEZVOUS",
+        "category_index": 12,
+        "category": "ASTEROID_RENDEZVOUS",
+        "name": "Psyche Metal World: 16-Psyche Nickel-Iron Orbital Insertion",
+        "destination": "CERES",
+        "difficulty": "MASTER",
+        "budget_usd": 68000000.0,
+        "max_spacecraft_mass_kg": 580.0,
+        "target_orbit": "Asteroid Proximity Orbit (50 km altitude)",
+        "mission_lifetime_days": 1400,
+        "description": "Rendezvous with and orbit 16-Psyche, an exposed metallic planetary core in the outer asteroid belt, utilizing Hall-effect ion propulsion.",
+        "scientific_objectives": [
+            "Determine if 16-Psyche is an intact metallic core of an early protoplanet",
+            "Map surface magnetic fields and nickel-iron elemental distribution"
+        ],
+        "required_instruments": ["INST-OPT-02", "PROP-ION-03"],
+        "recommended_instruments": ["ANT-X-02", "EPS-SOL-03"],
+        "power_requirement_w": 210.0,
+        "communication_requirement": "Continuous DSN Tracking",
+        "rewards": {"funds_usd": 90000000.0, "research_points": 310, "reputation": 15},
+        "failure_conditions": ["Ion engine grid sputtering erosion before reaching target", "Chaotic non-spherical gravity field escape"]
+    },
+    {
+        "id": "MSN-13-ASTEROID-SAMPLE",
+        "category_index": 13,
+        "category": "ASTEROID_SAMPLE_RETURN",
+        "name": "Osiris-Chronos: Carbonaceous Chondrite Touch-And-Go (TAG)",
+        "destination": "ASTEROID_BELT",
+        "difficulty": "MASTER",
+        "budget_usd": 95000000.0,
+        "max_spacecraft_mass_kg": 780.0,
+        "target_orbit": "TAG Contact & Interplanetary Earth Return",
+        "mission_lifetime_days": 1825,
+        "description": "Perform Touch-and-Go sampling on a ruble-pile carbonaceous asteroid, inject pressurized nitrogen to collect 250g of pristine organic dust, and return to Earth.",
+        "scientific_objectives": [
+            "Secure at least 150 grams of pristine pre-solar organic compounds",
+            "Execute direct atmospheric re-entry capsule landing in Utah"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["ANT-X-02", "STR-CFRP-02"],
+        "power_requirement_w": 160.0,
+        "communication_requirement": "DSN 70m Antenna Array",
+        "rewards": {"funds_usd": 135000000.0, "research_points": 420, "reputation": 24},
+        "failure_conditions": ["Spacecraft sinks into fluid-like asteroid surface regolith", "Capsule drogue parachute fails during re-entry"]
+    },
+    {
+        "id": "MSN-14-JUPITER-EXP",
+        "category_index": 14,
+        "category": "JUPITER_EXPLORATION",
+        "name": "Jovian Sovereign: Deep Atmosphere Probe & Magnetosphere Survey",
+        "destination": "JUPITER",
+        "difficulty": "MASTER",
+        "budget_usd": 88000000.0,
+        "max_spacecraft_mass_kg": 920.0,
+        "target_orbit": "Highly Elliptical Polar Perijove Insertion (PJ-Orbit)",
+        "mission_lifetime_days": 1800,
+        "description": "Navigate devastating Jovian radiation belts by skimming within 4,000 km of cloud tops to probe deep water abundances and core dynamo convection.",
+        "scientific_objectives": [
+            "Survive cumulative 100 krad radiation dose inside 1cm titanium radiation vault",
+            "Map Jovian magnetic field harmonics to degree 30"
+        ],
+        "required_instruments": ["OBC-RAD-02", "PROP-ION-03"],
+        "recommended_instruments": ["ANT-KA-03", "STR-ISO-03"],
+        "power_requirement_w": 280.0,
+        "communication_requirement": "DSN 70m Goldstone / Canberra (Light delay: ~45 min)",
+        "rewards": {"funds_usd": 120000000.0, "research_points": 390, "reputation": 20},
+        "failure_conditions": ["Total ionizing dose (TID) kills non-shielded microprocessors", "Solar concentrator array tracking slip in deep space"]
+    },
+    {
+        "id": "MSN-15-EUROPA-RECON",
+        "category_index": 15,
+        "category": "EUROPA_RECONNAISSANCE",
+        "name": "Europa Deep-Scout: Ice Penetrating Radar & Plume Sampling",
+        "destination": "EUROPA",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 130000000.0,
+        "max_spacecraft_mass_kg": 1150.0,
+        "target_orbit": "Multi-Flyby Jovian Resonance Orbit (50 Flybys)",
+        "mission_lifetime_days": 2555,
+        "description": "Fly through active water vapor plumes erupting from Europa's fractured ice shell, using ice-penetrating radar to measure ice shell thickness.",
+        "scientific_objectives": [
+            "Determine depth to liquid water ocean (radar sound 10 to 30 km ice crust)",
+            "Direct mass spectrometer ingestion of plume ice crystals searching for organic peptides"
+        ],
+        "required_instruments": ["INST-SAR-03", "INST-OPT-02", "OBC-RAD-02"],
+        "recommended_instruments": ["ANT-KA-03", "TCS-CRYO-03"],
+        "power_requirement_w": 320.0,
+        "communication_requirement": "Ultra-Wideband Ka-Band DSN Downlink",
+        "rewards": {"funds_usd": 180000000.0, "research_points": 560, "reputation": 30},
+        "failure_conditions": ["Radiation induced latch-up in instrument sensor front-end", "Failure of radar dipole antenna boom deployment"]
+    },
+    {
+        "id": "MSN-16-SATURN-OBS",
+        "category_index": 16,
+        "category": "SATURN_OBSERVATION",
+        "name": "Kronos Horizon: Ring Particle Dynamics & Hexagon Weather",
+        "destination": "SATURN",
+        "difficulty": "MASTER",
+        "budget_usd": 115000000.0,
+        "max_spacecraft_mass_kg": 980.0,
+        "target_orbit": "Inclined Kronian Ring-Grazing Orbit",
+        "mission_lifetime_days": 2920,
+        "description": "Investigate Saturn's persistent northern polar atmospheric hexagon and fly between the inner D ring and upper atmosphere.",
+        "scientific_objectives": [
+            "Measure ring mass and ring rain rate into Saturn's ionosphere",
+            "Direct thermal infrared mapping of polar vortex winds"
+        ],
+        "required_instruments": ["INST-OPT-02", "PROP-ION-03"],
+        "recommended_instruments": ["ANT-X-02", "EPS-SOL-03"],
+        "power_requirement_w": 260.0,
+        "communication_requirement": "DSN 70m Network (Light delay: 1 hour 15 min)",
+        "rewards": {"funds_usd": 160000000.0, "research_points": 480, "reputation": 26},
+        "failure_conditions": ["High-velocity ring particle impact shattering radiator", "Ion propulsion power starvation beyond 9.5 AU"]
+    },
+    {
+        "id": "MSN-17-TITAN-EXP",
+        "category_index": 17,
+        "category": "TITAN_EXPLORATION",
+        "name": "Titan Last Transmission: Hydrocarbon Sea Aerobot Probe",
+        "destination": "TITAN",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 160000000.0,
+        "max_spacecraft_mass_kg": 1350.0,
+        "target_orbit": "Titan Atmospheric Deceleration & Descent",
+        "mission_lifetime_days": 1200,
+        "description": "Enter Titan's dense nitrogen atmosphere, jettison heatshield, deploy dual-rotor aerial quadcopter, and sample shoreline muds of Kraken Mare at -179°C.",
+        "scientific_objectives": [
+            "Survive high-Mach atmospheric entry and glide across liquid methane seas",
+            "Perform in-situ mass spectrometry on organic tholins and prebiotic amino acid precursors",
+            "Transmit surface telemetry through nitrogen haze back to DSN relay"
+        ],
+        "required_instruments": ["INST-OPT-02", "INST-SAR-03", "PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["TCS-PIPE-02", "ANT-KA-03"],
+        "power_requirement_w": 350.0,
+        "communication_requirement": "Deep Space Ka-Band (Light delay: ~80 minutes)",
+        "rewards": {"funds_usd": 220000000.0, "research_points": 650, "reputation": 35},
+        "failure_conditions": ["Atmospheric icing / frozen methane build-up on rotor blades", "Cryogenic thermal seal failure at -179°C"]
+    },
+    {
+        "id": "MSN-18-DEEP-OBS",
+        "category_index": 18,
+        "category": "DEEP_SPACE_OBSERVATORIES",
+        "name": "Webb-Pro: Sun-Earth L2 Gravitational Wave & Exoplanet Transit",
+        "destination": "EARTH",
+        "difficulty": "MASTER",
+        "budget_usd": 140000000.0,
+        "max_spacecraft_mass_kg": 1450.0,
+        "target_orbit": "Sun-Earth Lagrange L2 Halo Orbit (1.5M km from Earth)",
+        "mission_lifetime_days": 3650,
+        "description": "Deploy a 5-layer Kapton sunshield cooled cryogenic space observatory at Sun-Earth L2 to characterize habitable exoplanet atmospheres via transmission spectroscopy.",
+        "scientific_objectives": [
+            "Maintain instrument detectors at stable 7 Kelvin using closed-cycle cryocooler",
+            "Detect atmospheric biosignatures (O2, O3, CH4, CO2) in Earth-sized exoplanet transits"
+        ],
+        "required_instruments": ["INST-OPT-02", "TCS-CRYO-03"],
+        "recommended_instruments": ["ADCS-ST-03", "ANT-KA-03"],
+        "power_requirement_w": 380.0,
+        "communication_requirement": "Continuous L2 Halo Orbit DSN passes",
+        "rewards": {"funds_usd": 195000000.0, "research_points": 600, "reputation": 32},
+        "failure_conditions": ["Sunshield tear or deployment mechanism jam", "Reaction wheel bearing degradation causing pointing jitter"]
+    },
+    {
+        "id": "MSN-19-ORBITAL-INFRA",
+        "category_index": 19,
+        "category": "ORBITAL_INFRASTRUCTURE",
+        "name": "Orbital Fuel Depot: Cryogenic LOX/Methane Autonomous Refueler",
+        "destination": "EARTH",
+        "difficulty": "MASTER",
+        "budget_usd": 105000000.0,
+        "max_spacecraft_mass_kg": 2200.0,
+        "target_orbit": "LEO Staging Orbit (450 km, 28.5°)",
+        "mission_lifetime_days": 3650,
+        "description": "Establish an automated orbital refueling node with zero-boil-off active cryocooling to transfer 20 metric tons of propellants to outbound deep-space ships.",
+        "scientific_objectives": [
+            "Zero-boil-off cryogenic propellant storage over 1 year orbital duration",
+            "Autonomous optical rendezvous and docking with sub-centimeter alignment"
+        ],
+        "required_instruments": ["PROP-HYD-02", "TCS-CRYO-03", "ADCS-ST-03"],
+        "recommended_instruments": ["OBC-RAD-02", "STR-ISO-03"],
+        "power_requirement_w": 420.0,
+        "communication_requirement": "Continuous TDRS Space Network Relay",
+        "rewards": {"funds_usd": 150000000.0, "research_points": 460, "reputation": 25},
+        "failure_conditions": ["Cryogenic boil-off pressure spike rupturing tank rupture disk", "Docking mechanism kinetic collision"]
+    },
+    {
+        "id": "MSN-20-MULTI-CRAFT",
+        "category_index": 20,
+        "category": "COLLABORATIVE_MISSIONS",
+        "name": "Solar Swarm: Multi-Spacecraft Interplanetary Radio Interferometer",
+        "destination": "SUN",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 175000000.0,
+        "max_spacecraft_mass_kg": 1800.0,
+        "target_orbit": "Distributed Solar Orbit Constellation (4 Spacecraft)",
+        "mission_lifetime_days": 1825,
+        "description": "A 4-spacecraft collaborative fleet operating in synchronized formation across 100,000 km baselines to form a synthetic aperture radio telescope imaging black hole accretion disks.",
+        "scientific_objectives": [
+            "Nanosecond atomic clock synchronization across 4 independent flight craft",
+            "Synthesize virtual 100,000 km radio aperture resolving sub-millisecond arcsecond structures",
+            "Multi-player coordinated flight operations between all 4 agency specialists"
+        ],
+        "required_instruments": ["ANT-KA-03", "OBC-RAD-02", "PROP-ION-03", "ADCS-ST-03"],
+        "recommended_instruments": ["TCS-CRYO-03", "EPS-SOL-03"],
+        "power_requirement_w": 500.0,
+        "communication_requirement": "Inter-Spacecraft Laser Cross-Links + Multi-DSN Downlinks",
+        "rewards": {"funds_usd": 250000000.0, "research_points": 800, "reputation": 40},
+        "failure_conditions": ["Loss of phase synchronization between any 2 spacecraft", "Formation drift exceeding inter-satellite laser acquisition cone"]
+    },
+    {
+        "id": "MSN-21-EARTH-SAR",
+        "category_index": 1,
+        "category": "EARTH_OBSERVATION",
+        "name": "RadarSat-X: Cloud-Penetrating Interferometric SAR Disaster Monitor",
+        "destination": "EARTH",
+        "difficulty": "INTERMEDIATE",
+        "budget_usd": 48000000.0,
+        "max_spacecraft_mass_kg": 720.0,
+        "target_orbit": "Dawn-Dusk Sun-Synchronous (620 km, 98.2°)",
+        "mission_lifetime_days": 1825,
+        "description": "Deploy an L-band synthetic aperture radar with phased-array antenna to monitor tectonic strain, flood inundation, and ice sheet velocity through 100% cloud cover.",
+        "scientific_objectives": [
+            "Millimeter-level surface deformation detection via InSAR interferometry",
+            "Generate 50m resolution global soil moisture and flood hazard maps",
+            "Maintain radar pulse phase coherence over 5-year mission duration"
+        ],
+        "required_instruments": ["INST-SAR-03", "EPS-SOL-02"],
+        "recommended_instruments": ["MEM-SSD-02", "ANT-X-02"],
+        "power_requirement_w": 320.0,
+        "communication_requirement": "X-Band Direct-to-Ground (Downlink >= 300 Mbps)",
+        "rewards": {"funds_usd": 65000000.0, "research_points": 190, "reputation": 12},
+        "failure_conditions": ["Antenna deployment hinge latch failure", "Power bus voltage sag during radar transmit pulses"]
+    },
+    {
+        "id": "MSN-22-EARTH-GEO",
+        "category_index": 2,
+        "category": "COMMUNICATION_SATELLITES",
+        "name": "AeroCom-Alpha: High-Throughput Ka-Band Geostationary Telecom Hub",
+        "destination": "EARTH",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 85000000.0,
+        "max_spacecraft_mass_kg": 1600.0,
+        "target_orbit": "Geostationary Equatorial Orbit (35,786 km, 0.0°)",
+        "mission_lifetime_days": 5475,
+        "description": "Position a high-throughput multi-spotbeam communications satellite in GEO slot 102.5°W to deliver 100 Gbps total throughput to airborne and maritime mobile terminals.",
+        "scientific_objectives": [
+            "Maintain north-south and east-west stationkeeping within +/-0.05 degrees",
+            "Sustain 15-year operational lifetime in Van Allen outer radiation belt",
+            "Power 48 active Ka-band traveling wave tube amplifiers during equinox eclipses"
+        ],
+        "required_instruments": ["ANT-KA-03", "EPS-SOL-03", "PROP-ION-03"],
+        "recommended_instruments": ["OBC-RAD-02", "TCS-PIPE-02"],
+        "power_requirement_w": 580.0,
+        "communication_requirement": "Dual High-Gain Ka-band Multi-beam Gateway Links",
+        "rewards": {"funds_usd": 120000000.0, "research_points": 280, "reputation": 18},
+        "failure_conditions": ["Arc-discharge breakdown in high-voltage traveling wave tubes", "Stationkeeping propellant depletion prior to 12 years"]
+    },
+    {
+        "id": "MSN-23-EARTH-DEBRIS",
+        "category_index": 19,
+        "category": "ORBITAL_INFRASTRUCTURE",
+        "name": "AstroSweeper: Autonomous Active Orbital Debris Harpoon & De-orbit",
+        "destination": "EARTH",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 55000000.0,
+        "max_spacecraft_mass_kg": 850.0,
+        "target_orbit": "High-Density Debris Polar Orbit (780 km, 98.4°)",
+        "mission_lifetime_days": 730,
+        "description": "Execute autonomous optical rendezvous and capture of a spent 1.2-ton upper stage rocket body using a robotic clamp mechanism and controlled destructive de-orbit burn into Point Nemo.",
+        "scientific_objectives": [
+            "Autonomous non-cooperative target relative navigation to within 0.5 meters",
+            "Execute physical docking clamp latch on non-stabilized tumbling cylinder",
+            "Deliver 180 m/s delta-v de-orbit burn targeting safe Pacific Ocean disposal"
+        ],
+        "required_instruments": ["ADCS-ST-03", "PROP-HYD-02", "OBC-AI-03"],
+        "recommended_instruments": ["STR-ISO-03", "ANT-S-01"],
+        "power_requirement_w": 180.0,
+        "communication_requirement": "S-Band Telemetry & Tracking via Ground Station Network",
+        "rewards": {"funds_usd": 78000000.0, "research_points": 240, "reputation": 16},
+        "failure_conditions": ["Robotic capture collision causing fragmentation cascading", "De-orbit impact footprint deviation into populated zones"]
+    },
+    {
+        "id": "MSN-24-EARTH-STATION",
+        "category_index": 19,
+        "category": "ORBITAL_INFRASTRUCTURE",
+        "name": "Cygnus-Prime: Autonomous Pressurized Cargo Resupply to Orbital Station",
+        "destination": "EARTH",
+        "difficulty": "INTERMEDIATE",
+        "budget_usd": 62000000.0,
+        "max_spacecraft_mass_kg": 1400.0,
+        "target_orbit": "International Space Station Orbit (415 km, 51.6°)",
+        "mission_lifetime_days": 180,
+        "description": "Launch an automated pressurized cargo carrier transporting 2,500 kg of scientific experiments, water, and replacement components to the international orbital research laboratory.",
+        "scientific_objectives": [
+            "Precision orbital phasing and rendezvous within Keep-Out Sphere",
+            "Autonomous soft-berthing to Common Berthing Mechanism (CBM) port",
+            "Hold 28-day berthed quiescent operations supporting onboard microgravity research"
+        ],
+        "required_instruments": ["ADCS-ST-03", "PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["EPS-BAT-02", "STR-CFRP-02"],
+        "power_requirement_w": 210.0,
+        "communication_requirement": "Continuous TDRS Space Relay with Video Telemetry",
+        "rewards": {"funds_usd": 85000000.0, "research_points": 210, "reputation": 14},
+        "failure_conditions": ["Trajectory drift inside station approach corridor", "Pressure hull micrometeoroid penetration"]
+    },
+    {
+        "id": "MSN-25-MOON-POLAR-ROVER",
+        "category_index": 6,
+        "category": "LUNAR_ROVER_DEPLOYMENT",
+        "name": "VIPER-Next: Permanently Shadowed Volatile Neutron Prospecting Rover",
+        "destination": "MOON_SOUTH_POLE",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 75000000.0,
+        "max_spacecraft_mass_kg": 580.0,
+        "target_orbit": "Lunar South Pole Surface (89.5°S, Nobile Crater Rim)",
+        "mission_lifetime_days": 100,
+        "description": "Deploy a 4-wheel drive semi-autonomous lunar rover equipped with a 1-meter regolith auger drill and neutron spectrometer into freezing (-240°C) permanently shadowed craters.",
+        "scientific_objectives": [
+            "Traverse at least 20 km over rough lunar cryogenic regolith terrain",
+            "Detect hydrogen concentrations down to 100 ppm using neutron spectrometer",
+            "Extract 12 subsurface ice-regolith core samples at 1m depth"
+        ],
+        "required_instruments": ["INST-SPEC-02", "OBC-AI-03", "EPS-BAT-03"],
+        "recommended_instruments": ["TCS-PIPE-02", "ANT-X-02"],
+        "power_requirement_w": 160.0,
+        "communication_requirement": "Direct-to-Earth X-Band Line-of-Sight Link",
+        "rewards": {"funds_usd": 110000000.0, "research_points": 340, "reputation": 22},
+        "failure_conditions": ["Wheel immobilization in soft volatile dust traps", "Battery temperature dropping below -40°C in shadow"]
+    },
+    {
+        "id": "MSN-26-MOON-RELAY",
+        "category_index": 4,
+        "category": "LUNAR_RECONNAISSANCE",
+        "name": "Artemis-Net: Far-Side Lunar Halo Orbit Optical/RF Communications Gateway",
+        "destination": "MOON",
+        "difficulty": "INTERMEDIATE",
+        "budget_usd": 52000000.0,
+        "max_spacecraft_mass_kg": 680.0,
+        "target_orbit": "Earth-Moon L2 Southern Halo Orbit (Z-amplitude 14,000 km)",
+        "mission_lifetime_days": 2555,
+        "description": "Insert a dedicated communications relay satellite into an Earth-Moon L2 halo orbit to provide unbroken line-of-sight telemetry between Earth and far-side lunar surface landers.",
+        "scientific_objectives": [
+            "Maintain halo orbit stationkeeping using ultra-low delta-v (< 15 m/s/year)",
+            "Provide 100% geometric visibility to lunar far-side and South Pole landing sites",
+            "Downlink high-bandwidth lunar science data to Goldstone and Madrid DSN antennas"
+        ],
+        "required_instruments": ["ANT-KA-03", "PROP-ION-03", "ADCS-ST-03"],
+        "recommended_instruments": ["EPS-SOL-02", "OBC-RAD-02"],
+        "power_requirement_w": 195.0,
+        "communication_requirement": "High-Power Ka-Band Relay + Deep Space Optical Link",
+        "rewards": {"funds_usd": 72000000.0, "research_points": 230, "reputation": 15},
+        "failure_conditions": ["Halo orbit insertion delta-v pointing error exceeding 0.2 deg", "Transponder lock loss during solar transit"]
+    },
+    {
+        "id": "MSN-27-MOON-SAMPLE-RETURN",
+        "category_index": 7,
+        "category": "LUNAR_SAMPLE_RETURN",
+        "name": "Chang'e-Legacy: South Pole-Aitken Deep Subsurface Core Sample Return",
+        "destination": "MOON",
+        "difficulty": "MASTER",
+        "budget_usd": 115000000.0,
+        "max_spacecraft_mass_kg": 2100.0,
+        "target_orbit": "Lunar Orbit (100 km) + Surface Landing + Earth Return",
+        "mission_lifetime_days": 35,
+        "description": "A complex 4-module mission (Orbiter, Lander, Ascent Vehicle, Earth Re-entry Capsule) to drill 2 meters into the South Pole-Aitken Basin mantle rocks and return 2.0 kg to Earth.",
+        "scientific_objectives": [
+            "Autonomous hazard avoidance landing in boulder-strewn impact crater",
+            "Drill and hermetically seal 2.0 kg of pristine lunar mantle regolith",
+            "Ascent vehicle orbital launch and autonomous docking with return orbiter in lunar orbit",
+            "Hyperbolic Earth atmospheric entry at 11.2 km/s with intact parachute touchdown"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-AI-03", "ADCS-ST-03", "STR-ISO-03"],
+        "recommended_instruments": ["EPS-BAT-02", "ANT-X-02"],
+        "power_requirement_w": 280.0,
+        "communication_requirement": "Lunar Relay Cross-Link + Earth DSN Direct",
+        "rewards": {"funds_usd": 160000000.0, "research_points": 480, "reputation": 28},
+        "failure_conditions": ["Ascent stage rendezvous failure in 100km lunar orbit", "Sample return heatshield ablation breach during Earth entry"]
+    },
+    {
+        "id": "MSN-28-MOON-CREWED-LANDER",
+        "category_index": 5,
+        "category": "LUNAR_LANDING",
+        "name": "Altair-Architect: Two-Stage Human Landing System Descent-Ascent Stage",
+        "destination": "MOON",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 190000000.0,
+        "max_spacecraft_mass_kg": 4200.0,
+        "target_orbit": "Near-Rectilinear Halo Orbit (NRHO) + Surface Landing",
+        "mission_lifetime_days": 180,
+        "description": "Design and validate the descent stage for a reusable crewed lunar lander capable of landing 4 astronauts at the Lunar South Pole with 7 days of surface life support.",
+        "scientific_objectives": [
+            "Execute deep-throttling LOX/Methane descent burn with zero-velocity touchdown",
+            "Support 4-person crew life support consumables and power for 168 hours surface stay",
+            "Demonstrate automated ascent stage propellant chill-down and readiness"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-AI-03", "EPS-SOL-03", "STR-ISO-03"],
+        "recommended_instruments": ["TCS-CRYO-03", "ANT-KA-03"],
+        "power_requirement_w": 650.0,
+        "communication_requirement": "Multi-channel High-Definition Video & Telemetry to DSN",
+        "rewards": {"funds_usd": 280000000.0, "research_points": 750, "reputation": 38},
+        "failure_conditions": ["Descent engine gimbal actuator stall during final pitch-up", "Landing leg crushable honeycomb rupture exceeding slope limit"]
+    },
+    {
+        "id": "MSN-29-MARS-AEROCAPTURE",
+        "category_index": 8,
+        "category": "MARS_ORBITERS",
+        "name": "Ares-Shield: Direct Atmospheric Aerocapture & Thermal Tile Validation",
+        "destination": "MARS",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 68000000.0,
+        "max_spacecraft_mass_kg": 950.0,
+        "target_orbit": "Hyperbolic Entry -> Aerocapture -> Low Mars Orbit (300 km)",
+        "mission_lifetime_days": 730,
+        "description": "Pioneer flight-proven aerocapture at Mars by utilizing a rigid aeroshell lifting body to brake into elliptical orbit in a single atmospheric pass, saving 1,200 kg of propellant.",
+        "scientific_objectives": [
+            "Guidance, navigation, and control through Mars upper atmosphere corridor (45-60 km)",
+            "Measure convective and radiative heat flux on carbon-phenolic TPS",
+            "Apoapsis raise burn at first orbit exit to circularize at 300 km"
+        ],
+        "required_instruments": ["OBC-AI-03", "PROP-HYD-02", "STR-ISO-03"],
+        "recommended_instruments": ["ADCS-ST-03", "ANT-X-02"],
+        "power_requirement_w": 175.0,
+        "communication_requirement": "Blackout Re-acquisition Direct-to-Earth X-Band",
+        "rewards": {"funds_usd": 98000000.0, "research_points": 310, "reputation": 20},
+        "failure_conditions": ["Atmospheric exit trajectory undershoot resulting in surface impact", "Lift-vector roll error causing planetary skip-out into solar orbit"]
+    },
+    {
+        "id": "MSN-30-MARS-RADAR-SOUNDER",
+        "category_index": 8,
+        "category": "MARS_ORBITERS",
+        "name": "MARSIS-2: Subsurface Low-Frequency Radar Water Ice Aquifer Sounder",
+        "destination": "MARS",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 58000000.0,
+        "max_spacecraft_mass_kg": 720.0,
+        "target_orbit": "Elliptical Polar Mars Orbit (250 x 800 km, 86°)",
+        "mission_lifetime_days": 1460,
+        "description": "Deploy a 40-meter dipole radar sounder operating at 1.8-5.0 MHz to penetrate through the Martian south polar layered deposits and detect liquid briny subglacial lakes at 1.5 km depth.",
+        "scientific_objectives": [
+            "Map dielectric contrast of polar ice cap basal boundary across both hemispheres",
+            "Detect subsurface liquid brine aquifers with > 95% confidence interval",
+            "Generate 3D radar echogram atlas of Medusae Fossae porous dust formations"
+        ],
+        "required_instruments": ["INST-SAR-03", "EPS-SOL-02", "MEM-SSD-02"],
+        "recommended_instruments": ["OBC-RAD-02", "ANT-X-02"],
+        "power_requirement_w": 210.0,
+        "communication_requirement": "X-Band Deep Space Downlink (>= 120 kbps at 2.5 AU)",
+        "rewards": {"funds_usd": 82000000.0, "research_points": 260, "reputation": 17},
+        "failure_conditions": ["40m radar dipole antenna boom deployment jam", "Severe ionospheric plasma dispersion blinding radar reception"]
+    },
+    {
+        "id": "MSN-31-MARS-PHOBOS-SAMPLE",
+        "category_index": 13,
+        "category": "ASTEROID_SAMPLE_RETURN",
+        "name": "Phobos-Grit: Low-Gravity Touch-and-Go Regolith Core Return",
+        "destination": "PHOBOS",
+        "difficulty": "MASTER",
+        "budget_usd": 95000000.0,
+        "max_spacecraft_mass_kg": 1250.0,
+        "target_orbit": "Phobos Quasi-Satellite Orbit (QSO) + Touchdown + Earth Return",
+        "mission_lifetime_days": 1095,
+        "description": "Fly to Mars moon Phobos, enter close formation orbit, touch down in microgravity (0.0057 m/s²) using cold-gas anchoring thrusters, collect 100g of regolith, and return it to Earth.",
+        "scientific_objectives": [
+            "Proximity formation flight in non-spherical irregular gravity field",
+            "Touch-and-go sampling arm deployment within 3-second contact window",
+            "Determine whether Phobos is a captured D-type asteroid or giant impact ejecta"
+        ],
+        "required_instruments": ["PROP-HYD-02", "OBC-AI-03", "ADCS-ST-03"],
+        "recommended_instruments": ["EPS-SOL-02", "MEM-MRAM-03"],
+        "power_requirement_w": 185.0,
+        "communication_requirement": "DSN X-Band Deep Space Network Tracking",
+        "rewards": {"funds_usd": 135000000.0, "research_points": 420, "reputation": 26},
+        "failure_conditions": ["Spacecraft rebound velocity exceeding Phobos escape velocity during touch", "Earth atmospheric entry capsule thermal seal contamination"]
+    },
+    {
+        "id": "MSN-32-MARS-ISRU-MAV",
+        "category_index": 9,
+        "category": "MARS_LANDERS",
+        "name": "Prometheus-Oxygen: Sabatier CO2 Electrolysis & MAV Propellant Generator",
+        "destination": "MARS",
+        "difficulty": "MASTER",
+        "budget_usd": 110000000.0,
+        "max_spacecraft_mass_kg": 1650.0,
+        "target_orbit": "Mars Surface (Elysium Planitia, 4.5°N)",
+        "mission_lifetime_days": 730,
+        "description": "Land a heavy industrial payload on Mars that ingests atmospheric carbon dioxide and produces 5.0 metric tons of liquid oxygen (LOX) using high-temperature solid oxide electrolysis.",
+        "scientific_objectives": [
+            "Extract 98% pure oxygen from 6 mbar atmospheric CO2 at 2.5 kg/hour rate",
+            "Cryo-liquefy and store liquid oxygen at 90 K for 500 sols with < 0.1% boil-off",
+            "Demonstrate autonomous launch vehicle tank refuelling umbilical connection"
+        ],
+        "required_instruments": ["TCS-CRYO-03", "EPS-SOL-03", "PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["STR-ISO-03", "MEM-SSD-02"],
+        "power_requirement_w": 520.0,
+        "communication_requirement": "Mars Relay Orbiter UHF Proximity Link + Direct X-Band",
+        "rewards": {"funds_usd": 155000000.0, "research_points": 450, "reputation": 27},
+        "failure_conditions": ["Solid oxide electrolysis ceramic cell thermal shock fracture", "Compressor seal fouling from abrasive airborne Martian dust"]
+    },
+    {
+        "id": "MSN-33-AST-PSYCHE-CORE",
+        "category_index": 12,
+        "category": "ASTEROID_RENDEZVOUS",
+        "name": "Chondrite-Core: 16 Psyche Metal Asteroid Gravity & Magnetic Field Mapper",
+        "destination": "ASTEROID_PSYCHE",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 82000000.0,
+        "max_spacecraft_mass_kg": 1100.0,
+        "target_orbit": "Solar Electric Cruise -> Psyche Orbit B1/B2 (100 km)",
+        "mission_lifetime_days": 1825,
+        "description": "Rendezvous with metallic asteroid 16 Psyche in the outer asteroid belt using xenon ion thrusters. Measure remanent magnetic crustal fields to prove it was once an active planetary dynamo.",
+        "scientific_objectives": [
+            "Confirm metallic nickel-iron surface composition via multispectral gamma/neutron spec",
+            "Map remnant paleomagnetic dipole signatures frozen in metallic rocks",
+            "Determine density distribution and bulk porosity through radio science tracking"
+        ],
+        "required_instruments": ["INST-MAG-01", "PROP-ION-03", "EPS-SOL-03"],
+        "recommended_instruments": ["ADCS-ST-03", "OBC-RAD-02"],
+        "power_requirement_w": 260.0,
+        "communication_requirement": "Deep Space X/Ka-band High-Gain Antenna",
+        "rewards": {"funds_usd": 115000000.0, "research_points": 360, "reputation": 23},
+        "failure_conditions": ["Ion engine grid erosion failure during 3-year cruise", "Spacecraft charging anomaly near highly conductive metallic asteroid"]
+    },
+    {
+        "id": "MSN-34-AST-VESTA-BASALT",
+        "category_index": 11,
+        "category": "ASTEROID_FLYBYS",
+        "name": "RheaSilvia: Basaltic Lava Crust & Deep Impact Crater Stratigraphy",
+        "destination": "ASTEROID_VESTA",
+        "difficulty": "INTERMEDIATE",
+        "budget_usd": 46000000.0,
+        "max_spacecraft_mass_kg": 640.0,
+        "target_orbit": "Vesta Mapping Orbit (210 km, 88°)",
+        "mission_lifetime_days": 730,
+        "description": "Orbit differentiated asteroid 4 Vesta to map the immense Rheasilvia impact crater central peak (22 km high) and measure isotopic ratios matching Howardite-Eucrite-Diogenite meteorites.",
+        "scientific_objectives": [
+            "High-resolution stereo elevation mapping of equatorial graben canyons",
+            "Visible and infrared mineralogical identification of pyroxene basalt flows",
+            "Detect volatile hydroxyl signatures in shadowed polar crater floors"
+        ],
+        "required_instruments": ["INST-OPT-02", "PROP-ION-03", "EPS-SOL-02"],
+        "recommended_instruments": ["MEM-FLASH-01", "OBC-LEON-01"],
+        "power_requirement_w": 140.0,
+        "communication_requirement": "X-Band Direct-to-Earth Link",
+        "rewards": {"funds_usd": 68000000.0, "research_points": 210, "reputation": 13},
+        "failure_conditions": ["Reaction wheel desaturation fuel depletion", "Solar array output degradation below 2.4 AU threshold"]
+    },
+    {
+        "id": "MSN-35-AST-DIDYMOS-DART",
+        "category_index": 11,
+        "category": "ASTEROID_FLYBYS",
+        "name": "Aegis-Impactor: Hypervelocity Kinetic Deflection of Dimorphos Moonlet",
+        "destination": "ASTEROID_BELT",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 72000000.0,
+        "max_spacecraft_mass_kg": 610.0,
+        "target_orbit": "Interplanetary Heliocentric Intercept Trajectory",
+        "mission_lifetime_days": 365,
+        "description": "Execute a planetary defence kinetic impactor test by slamming a 600 kg spacecraft at 6.6 km/s into the center-of-mass of asteroid moonlet Dimorphos to alter its binary orbital period.",
+        "scientific_objectives": [
+            "Autonomous SMART Nav optical terminal guidance in final 4 hours of flight",
+            "Impact binary asteroid moonlet within 15 meters of target center",
+            "Transmit real-time 1 Hz stream of impact crater boulders down to 1 second before impact"
+        ],
+        "required_instruments": ["INST-OPT-02", "OBC-AI-03", "PROP-HYD-02"],
+        "recommended_instruments": ["ADCS-ST-03", "STR-CFRP-02"],
+        "power_requirement_w": 135.0,
+        "communication_requirement": "Low-Latency X-Band Real-Time Visual Uplink",
+        "rewards": {"funds_usd": 105000000.0, "research_points": 330, "reputation": 21},
+        "failure_conditions": ["Autonomous terminal optical navigation tracking loss on asteroid moonlet", "Thruster latch valve failure preventing terminal trajectory corrections"]
+    },
+    {
+        "id": "MSN-36-JUPITER-CALLISTO",
+        "category_index": 14,
+        "category": "JUPITER_EXPLORATION",
+        "name": "Valhalla-Base: Callisto Low-Radiation Staging Orbit & Ice Crust Sounding",
+        "destination": "CALLISTO",
+        "difficulty": "PROFESSIONAL",
+        "budget_usd": 88000000.0,
+        "max_spacecraft_mass_kg": 1150.0,
+        "target_orbit": "Jupiter Polar Capture -> Callisto Circular Orbit (150 km)",
+        "mission_lifetime_days": 1460,
+        "description": "Enter orbit around Callisto, Jupiter's outermost Galilean moon, taking advantage of its mild radiation environment (0.01 mSv/day) to survey pristine ancient ice and map the giant Valhalla multiring crater.",
+        "scientific_objectives": [
+            "Radar sound the upper 5 km of Callisto's ancient impact-saturated ice crust",
+            "Measure induced magnetic dipole to confirm a deep, conductive subsurface ocean",
+            "Establish orbital telecommunications relay architecture for future human crewed outposts"
+        ],
+        "required_instruments": ["INST-SAR-03", "INST-MAG-01", "PROP-ION-03", "EPS-SOL-03"],
+        "recommended_instruments": ["OBC-RAD-02", "ANT-KA-03"],
+        "power_requirement_w": 220.0,
+        "communication_requirement": "Ka-Band Deep Space Network Downlink",
+        "rewards": {"funds_usd": 125000000.0, "research_points": 390, "reputation": 25},
+        "failure_conditions": ["Jupiter gravity-assist pitch error throwing trajectory into radiation belt", "Deep cryogenic freezing of hydrazine propellant lines"]
+    },
+    {
+        "id": "MSN-37-SATURN-ENCELADUS-PLUME",
+        "category_index": 16,
+        "category": "SATURN_OBSERVATION",
+        "name": "CryoGeyser: Low-Altitude Enceladus Tiger Stripe Plume Sampling Probe",
+        "destination": "ENCELADUS",
+        "difficulty": "MASTER",
+        "budget_usd": 120000000.0,
+        "max_spacecraft_mass_kg": 1350.0,
+        "target_orbit": "Saturn Orbit -> Enceladus Close Flybys (25 km altitude)",
+        "mission_lifetime_days": 2190,
+        "description": "Fly through the supersonic water-ice and organic molecule geysers erupting from the South Pole of Enceladus at 25 km altitude, sampling prebiotic amino acids without needing to land.",
+        "scientific_objectives": [
+            "Capture intact ice grains with aerogel collector without thermal destruction",
+            "Gas chromatograph mass spec detection of complex macromolecules (mass > 200 Da)",
+            "Measure molecular hydrogen (H2) and methane concentrations indicative of methanogenesis"
+        ],
+        "required_instruments": ["INST-SPEC-02", "EPS-RTG-03", "PROP-HYD-02", "OBC-RAD-02"],
+        "recommended_instruments": ["STR-ISO-03", "MEM-MRAM-03"],
+        "power_requirement_w": 180.0,
+        "communication_requirement": "Continuous High-Gain X/Ka-band DSN Link",
+        "rewards": {"funds_usd": 170000000.0, "research_points": 520, "reputation": 32},
+        "failure_conditions": ["Spacecraft disorientation from supersonic plume dynamic pressure", "Ice grain impact erosion of optical sensors during 25km pass"]
+    },
+    {
+        "id": "MSN-38-SATURN-ATMOSPHERE",
+        "category_index": 16,
+        "category": "SATURN_OBSERVATION",
+        "name": "Cronus-Deep: Hypervelocity Saturn Deep Atmospheric Pressure Sink Probe",
+        "destination": "SATURN",
+        "difficulty": "MASTER",
+        "budget_usd": 105000000.0,
+        "max_spacecraft_mass_kg": 880.0,
+        "target_orbit": "Saturn Equatorial Plunge (Entry speed 36 km/s)",
+        "mission_lifetime_days": 1825,
+        "description": "Release a heavily shielded planetary entry probe into Saturn's cloud decks to descend to 20 bars pressure, measuring noble gas abundances (helium, neon, argon) and lightning discharges.",
+        "scientific_objectives": [
+            "Survive peak aerothermal deceleration exceeding 250 g's with carbon-phenolic heatshield",
+            "Direct in-situ mass spectrometer sampling of atmospheric layers down to 20 bar",
+            "Relay data in real-time to carrier flyby bus before thermal crushing"
+        ],
+        "required_instruments": ["OBC-RAD-02", "EPS-BAT-03", "STR-ISO-03"],
+        "recommended_instruments": ["TCS-PASS-01", "ANT-X-02"],
+        "power_requirement_w": 230.0,
+        "communication_requirement": "UHF Proximity Link Probe-to-Carrier Bus -> Earth DSN",
+        "rewards": {"funds_usd": 145000000.0, "research_points": 460, "reputation": 29},
+        "failure_conditions": ["Parachute mortar deployment timer malfunction", "Carrier bus loses line-of-sight geometry before probe reaches 15 bar depth"]
+    },
+    {
+        "id": "MSN-39-URANUS-FLAGSHIP",
+        "category_index": 18,
+        "category": "DEEP_SPACE_OBSERVATORIES",
+        "name": "Titania-Pathfinder: Uranus System Orbiter & Methane Cloud Penetrator",
+        "destination": "URANUS",
+        "difficulty": "MASTER",
+        "budget_usd": 135000000.0,
+        "max_spacecraft_mass_kg": 1550.0,
+        "target_orbit": "Uranus System Polar Capture (19.2 AU distance)",
+        "mission_lifetime_days": 4380,
+        "description": "A 12-year flagship expedition using an RTG-powered orbiter and atmospheric probe to investigate the icy core structure, anomalous 98° tilt, and fractured moons (Miranda, Titania) of Uranus.",
+        "scientific_objectives": [
+            "Map complex tilted, offset magnetic dipole dynamo using fluxgate magnetometers",
+            "Drop atmospheric entry probe to measure methane cloud deck condensation depth",
+            "High-resolution imaging of Miranda's 20-km vertical Verona Chasma cliffs"
+        ],
+        "required_instruments": ["EPS-RTG-03", "INST-MAG-01", "ANT-KA-03", "PROP-HYD-02"],
+        "recommended_instruments": ["OBC-RAD-02", "MEM-MRAM-03"],
+        "power_requirement_w": 160.0,
+        "communication_requirement": "Ka-Band 34m/70m Deep Space Network Dish Array",
+        "rewards": {"funds_usd": 195000000.0, "research_points": 580, "reputation": 34},
+        "failure_conditions": ["RTG thermocouple output degradation over 12-year cruise", "Orbit insertion burn telemetry failure due to 2.5-hour one-way light delay"]
+    },
+    {
+        "id": "MSN-40-NEPTUNE-TRITON",
+        "category_index": 18,
+        "category": "DEEP_SPACE_OBSERVATORIES",
+        "name": "Nereid-Horizon: Neptune Ice Giant & Triton Cryo-Geyser Dual Encounter",
+        "destination": "TRITON",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 160000000.0,
+        "max_spacecraft_mass_kg": 1650.0,
+        "target_orbit": "Neptune Aerocapture / Elliptical Orbit + Triton Resonant Flybys",
+        "mission_lifetime_days": 5475,
+        "description": "Voyage to the edge of the major planets (30 AU) to orbit Neptune and repeatedly encounter Triton, measuring its cantaloupe terrain, active nitrogen geysers, and retrograde orbital decay.",
+        "scientific_objectives": [
+            "Confirm active nitrogen cryovolcanic eruption mechanics in -235°C exosphere",
+            "Determine internal heat budget driving Triton's geysers using infrared radiometer",
+            "Measure wind speed and vorticity of Neptune's Great Dark Spot vortex storms"
+        ],
+        "required_instruments": ["EPS-RTG-03", "INST-OPT-02", "INST-MAG-01", "PROP-ION-03"],
+        "recommended_instruments": ["ANT-KA-03", "STR-ISO-03"],
+        "power_requirement_w": 170.0,
+        "communication_requirement": "Ultra-sensitive 70-meter DSN Ka-Band Uplink (4.1-hour light delay)",
+        "rewards": {"funds_usd": 230000000.0, "research_points": 700, "reputation": 37},
+        "failure_conditions": ["Severe attitude control thruster freezing during 15-year voyage", "Optical sensor blind-spot during retrograde hypervelocity flyby"]
+    },
+    {
+        "id": "MSN-41-DEEP-L2-HABITABLE",
+        "category_index": 18,
+        "category": "DEEP_SPACE_OBSERVATORIES",
+        "name": "L2-ExoSearch: Sun-Earth L2 Coronagraphic Habitable World Biosignature Array",
+        "destination": "EARTH",
+        "difficulty": "MASTER",
+        "budget_usd": 140000000.0,
+        "max_spacecraft_mass_kg": 1950.0,
+        "target_orbit": "Sun-Earth L2 Lagrange Halo Orbit (1.5 Million km)",
+        "mission_lifetime_days": 3650,
+        "description": "Deploy a 6-meter segmented space telescope equipped with an extreme starlight coronagraph to directly image Earth-sized rocky exoplanets in nearby star habitable zones and search for atmospheric oxygen and methane biosignatures.",
+        "scientific_objectives": [
+            "Starlight suppression ratio of 10^-10 using adaptive optics coronagraph mask",
+            "Direct spectroscopic detection of H2O, O2, O3, and CH4 in exoplanet atmospheres",
+            "Picometer-level wavefront stability at 35 Kelvin passive cryo-thermal equilibrium"
+        ],
+        "required_instruments": ["INST-OPT-02", "TCS-CRYO-03", "ADCS-ST-03", "ANT-KA-03"],
+        "recommended_instruments": ["EPS-SOL-03", "OBC-RAD-02"],
+        "power_requirement_w": 380.0,
+        "communication_requirement": "Daily 200 GB Ka-Band Science Dump to DSN",
+        "rewards": {"funds_usd": 210000000.0, "research_points": 640, "reputation": 35},
+        "failure_conditions": ["Sunshield thermal membrane unfurling rip exposing mirrors to solar heat", "Reaction wheel micro-vibration exceeding picometer pointing tolerance"]
+    },
+    {
+        "id": "MSN-42-INTERSTELLAR-PROBE",
+        "category_index": 18,
+        "category": "DEEP_SPACE_OBSERVATORIES",
+        "name": "Voyager-Continuum: Radioisotope Heliopause Crossing at 200 AU",
+        "destination": "KUIPER_BELT",
+        "difficulty": "TITAN_CHALLENGE",
+        "budget_usd": 185000000.0,
+        "max_spacecraft_mass_kg": 1100.0,
+        "target_orbit": "Solar Gravity Assist -> Interstellar Hyperbolic Escape (7.5 AU/year)",
+        "mission_lifetime_days": 9125,
+        "description": "Launch a next-generation interstellar probe powered by dual Pu-238 RTGs that executes a close perihelion Oberth maneuver around the Sun to reach 200 AU within 25 years, directly sampling pristine galactic cosmic rays and interstellar magnetic fields outside the heliosphere.",
+        "scientific_objectives": [
+            "Direct measurement of pristine interstellar medium neutral hydrogen and dust flux",
+            "Map boundary topology of heliopause and interstellar magnetic shock front",
+            "Demonstrate optical laser communications across 200 AU (27.7-hour light time)"
+        ],
+        "required_instruments": ["EPS-RTG-03", "INST-MAG-01", "ANT-KA-03", "OBC-RAD-02"],
+        "recommended_instruments": ["STR-ISO-03", "MEM-MRAM-03"],
+        "power_requirement_w": 190.0,
+        "communication_requirement": "Ultra-Deep Space Laser Comm / 70m DSN Grid Array",
+        "rewards": {"funds_usd": 275000000.0, "research_points": 850, "reputation": 45},
+        "failure_conditions": ["Perihelion thermal shield degradation during 0.05 AU solar skim", "Power margin loss before crossing heliopause at 125 AU"]
+    }
+]
+
+@router.get("/catalogue")
+def get_mission_catalogue(category: Optional[str] = None):
+    if category:
+        cat = category.strip().upper()
+        res = [m for m in MISSION_CATALOGUE if m["category"] == cat or cat in m["name"].upper()]
+        return {"total_missions": len(res), "missions": res}
+    return {
+        "total_missions": len(MISSION_CATALOGUE),
+        "categories_covered": 20,
+        "missions": MISSION_CATALOGUE
+    }
+
+@router.get("/catalogue/{mission_id}")
+def get_mission_details(mission_id: str):
+    mid = mission_id.strip().upper()
+    m = next((item for item in MISSION_CATALOGUE if item["id"] == mid), None)
+    if not m:
+        raise HTTPException(status_code=404, detail=f"Mission contract '{mid}' not found.")
+    return m
