@@ -498,6 +498,7 @@ def serve_landing():
     return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/app")
+@app.get("/app.html")
 @app.get("/play")
 def serve_app():
     index_file = STATIC_DIR / "index.html"
@@ -506,6 +507,7 @@ def serve_app():
     return {"message": "Orbital Architect Workstation is offline."}
 
 @app.get("/mars")
+@app.get("/mars.html")
 @app.get("/mars-exploration")
 def serve_mars():
     mars_file = STATIC_DIR / "mars.html"
@@ -514,6 +516,7 @@ def serve_mars():
     return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/titan")
+@app.get("/titan.html")
 def serve_titan():
     titan_file = STATIC_DIR / "titan.html"
     if titan_file.exists():

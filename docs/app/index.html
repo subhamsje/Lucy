@@ -568,7 +568,7 @@
         ★ TITAN EXPEDITION ↗
       </a>
 
-      <a href="/landing" class="btn-tech" style="border-color: var(--status-carrier); color: var(--status-carrier); font-size: 9px; padding: 2px 8px; text-decoration: none;" title="Public Space Agency Portal">
+      <a href="../index.html" class="btn-tech" style="border-color: var(--status-carrier); color: var(--status-carrier); font-size: 9px; padding: 2px 8px; text-decoration: none;" title="Public Space Agency Portal">
         🌐 PORTAL ↗
       </a>
     </div>
@@ -777,7 +777,7 @@
             EXPAND FULLSCREEN ↗
           </a>
         </div>
-        <iframe src="/static/titan.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        <iframe id="iframeTitanExpedition" src="../titan.html" style="width: 100%; height: 100%; border: none;"></iframe>
       </section>
 
       <!-- --------------------------------------------------------------------- -->
@@ -789,7 +789,7 @@
             EXPAND FULLSCREEN ↗
           </a>
         </div>
-        <iframe src="/mars" style="width: 100%; height: 100%; border: none;"></iframe>
+        <iframe id="iframeMarsExploration" src="../mars.html" style="width: 100%; height: 100%; border: none;"></iframe>
       </section>
 
       <!-- --------------------------------------------------------------------- -->
@@ -3865,6 +3865,16 @@
         fetchMissionMarket();
       } else if (viewId === 'VIEW_MISSION_CONTROL' || viewId === 'VIEW_TELEMETRY') {
         setTimeout(resizeMcEcharts, 50);
+      } else if (viewId === 'VIEW_MARS_EXPLORATION') {
+        const marsFrame = document.getElementById('iframeMarsExploration');
+        if (marsFrame && (!marsFrame.src || marsFrame.src.endsWith('/mars') || marsFrame.src.includes('404') || marsFrame.src === 'about:blank')) {
+          marsFrame.src = '../mars.html';
+        }
+      } else if (viewId === 'VIEW_TITAN_EXPEDITION') {
+        const titanFrame = document.getElementById('iframeTitanExpedition');
+        if (titanFrame && (!titanFrame.src || titanFrame.src.includes('/static/titan.html') || titanFrame.src.includes('404') || titanFrame.src === 'about:blank')) {
+          titanFrame.src = '../titan.html';
+        }
       }
     }
 

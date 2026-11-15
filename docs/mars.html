@@ -1536,7 +1536,7 @@
             </div>
           </div>
 
-          <button onclick="window.location.href='/app'" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; font-weight: 700;">
+          <button onclick="window.location.href=(window.location.hostname.includes('github.io') ? 'app.html' : '/app')" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; font-weight: 700;">
             OPEN SPACE AGENCY WORKSTATION ▶
           </button>
         </div>
@@ -4060,7 +4060,7 @@
           })
         });
       } catch(e) {}
-      window.location.href = '/app';
+      window.location.href = window.location.hostname.includes('github.io') ? 'app.html' : '/app';
     }
 
     function openProfileModal() {
