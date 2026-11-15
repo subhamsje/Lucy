@@ -3,6 +3,9 @@
 
 set -e
 
+# Change to script directory
+cd "$(dirname "$0")"
+
 echo "========================================================================="
 echo "      KHAGOL // SPACE AGENCY : THE MISSION ARCHITECT"
 echo "      Systems Engineering & Planetary Exploration Simulation Platform"
@@ -33,16 +36,20 @@ if [ -f ".venv/bin/activate" ]; then
 fi
 
 # 3. Dependencies
-echo "[INFO] Verifying core aerospace dependencies..."
+echo "[INFO] Verifying core aerospace dependencies from requirements.txt..."
 python -m pip install --quiet --upgrade pip
-python -m pip install --quiet fastapi uvicorn pydantic httpx pytest
+if [ -f "requirements.txt" ]; then
+    python -m pip install --quiet -r requirements.txt
+else
+    python -m pip install --quiet fastapi "uvicorn[standard]" pydantic httpx websockets python-multipart pytest
+fi
 
 # 4. Set PYTHONPATH
 export PYTHONPATH="$(pwd)"
 
 echo ""
 echo "========================================================================="
-echo "  SYSTEM ONLINE:"
+echo "  SYSTEM ONLINE — HOSTING ON LOCALHOST 8000:"
 echo "  - Public Portal:        http://localhost:8000/"
 echo "  - Workstation App:      http://localhost:8000/app"
 echo "  - Mars Exploration:     http://localhost:8000/mars"
@@ -58,5 +65,5 @@ elif command -v xdg-open >/dev/null 2>&1; then
     xdg-open "http://localhost:8000/" &
 fi
 
-echo "[INFO] Launching FastAPI Uvicorn ASGI server with live reload..."
+echo "[INFO] Launching FastAPI Uvicorn ASGI server on http://localhost:8000..."
 exec python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
