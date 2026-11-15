@@ -6,10 +6,12 @@
   <script>
     (function() {
       var path = window.location.pathname;
-      var repo = '/Lucy';
+      var repo = '/khagol';
       var rel = path;
       if (rel.indexOf(repo) === 0) {
         rel = rel.substring(repo.length);
+      } else if (rel.indexOf('/Lucy') === 0) {
+        rel = rel.substring(5);
       }
       rel = rel.replace(/^\//, '').replace(/\/$/, '');
       if (rel === 'app' || rel === 'app/') {

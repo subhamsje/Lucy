@@ -95,8 +95,8 @@ $$\theta_{\text{diffraction}} = 1.22 \frac{\lambda}{D}$$
 ### Manual Installation
 ```bash
 # Clone the repository
-git clone https://github.com/subhamsje/Lucy.git
-cd Lucy
+git clone https://github.com/subhamsje/khagol.git
+cd khagol
 
 # Create virtual environment
 python3 -m venv .venv

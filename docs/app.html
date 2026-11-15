@@ -110,7 +110,8 @@
 
           // General /api/v1/ routing for GitHub Pages
           if (url.startsWith('/api/v1/')) {
-            const repoBase = window.location.pathname.includes('/Lucy') ? '/Lucy' : '';
+            const pathParts = window.location.pathname.split('/');
+            const repoBase = (window.location.hostname.includes('github.io') && pathParts[1]) ? '/' + pathParts[1] : (window.location.pathname.includes('/khagol') ? '/khagol' : (window.location.pathname.includes('/Lucy') ? '/Lucy' : ''));
             const relJson = repoBase + '/api/v1/' + url.replace('/api/v1/', '') + '.json';
             try {
               const r = await origFetch(url, options);
