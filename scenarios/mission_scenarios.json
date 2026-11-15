@@ -1,0 +1,513 @@
+{
+  "scenario_version": "1.0.0",
+  "scenarios": [
+    {
+      "id": "SCEN-01-EO-SENTINEL",
+      "name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
+      "category": "EARTH_OBSERVATION",
+      "difficulty": "CADET",
+      "target_destination": "Earth Orbit",
+      "mission_objective": "Monitor global terrestrial wildfire hotspots and deforestation fronts at high spatial and temporal resolution.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 450.0,
+        "target_metrics": {
+          "ground_sample_distance_m": 15.0,
+          "revisit_time_days": 3.0,
+          "spectral_coverage": "Visible + Near-Infrared + Thermal"
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Sun-Synchronous Noon/Midnight (SSO-550)",
+          "orbit_type": "Sun-Synchronous Orbit (SSO)",
+          "altitude_km": 550.0,
+          "inclination_deg": 97.6,
+          "eccentricity": 0.001,
+          "delta_v_insertion_ms": 120.0,
+          "pros": "Consistent sunlit illumination for optical imagery, predictable ground pass scheduling over high-latitude stations (Svalbard/Troll).",
+          "cons": "Requires 35-minute eclipse battery survival every 95-minute orbit; moderate atmospheric drag."
+        },
+        {
+          "name": "Dawn-Dusk Sun-Synchronous (SSO-650-DD)",
+          "orbit_type": "Sun-Synchronous Orbit (SSO)",
+          "altitude_km": 650.0,
+          "inclination_deg": 98.0,
+          "eccentricity": 0.001,
+          "delta_v_insertion_ms": 150.0,
+          "pros": "Continuous solar panel illumination (near 0% eclipse), drastically reducing battery mass and thermal cycling.",
+          "cons": "Low sun-elevation angles produce heavy shadows on surface terrain; slightly degraded optical contrast."
+        },
+        {
+          "name": "Mid-Inclination Low Earth Orbit (LEO-400-51deg)",
+          "orbit_type": "Low Earth Orbit (LEO)",
+          "altitude_km": 400.0,
+          "inclination_deg": 51.6,
+          "eccentricity": 0.001,
+          "delta_v_insertion_ms": 50.0,
+          "pros": "High ground resolution (closer to surface), low launch insertion delta-V.",
+          "cons": "Zero coverage of polar/boreal forests; severe atmospheric drag requiring frequent propulsion stationkeeping burns."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.05,
+        "min_delta_v_ms": 80.0,
+        "mandatory_subsystems": ["SCIENTIFIC_INSTRUMENT", "ELECTRICAL_POWER", "COMMUNICATION_ANTENNA", "DATA_STORAGE", "ATTITUDE_CONTROL"]
+      },
+      "mission_duration_days": 180,
+      "budget_cap_usd": 35000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MICRO_LAUNCHER", "RIDESHARE_ESPA", "MEDIUM_LIFT"],
+        "launch_window_frequency_days": 1.0,
+        "c3_energy_km2_s2": -35.0
+      },
+      "environmental_challenges": [
+        "Frequent Day-to-Night thermal cycling (15 to 16 eclipses per 24 hours)",
+        "Residual upper-atmospheric atomic oxygen erosion in LEO",
+        "South Atlantic Anomaly (SAA) radiation single-event upsets"
+      ],
+      "success_criteria": {
+        "min_science_gb": 400.0,
+        "min_operational_days": 150
+      },
+      "failure_conditions": [
+        "Battery State of Charge drops to 0% during an eclipse transit",
+        "Onboard solid-state memory buffer overflows (>100% capacity) dropping more than 50 GB of data",
+        "Orbital altitude decays below 220 km due to drag without propulsion recovery"
+      ],
+      "optional_objectives": [
+        "Zero-Propellant Survival: Complete the 180-day mission using only aerodynamic trim and magnetic torquers",
+        "High-Throughput Downlink: Transmit >1,000 GB of telemetry using Ka-band high-gain comms",
+        "Under-Budget Award: Complete mission under $12M total CapEx"
+      ],
+      "viable_architectures": [
+        {
+          "name": "Agile 12U CubeSat Rideshare",
+          "description": "Utilizes standard 12U chassis, basic imager (INST-OPT-01), body panels, and S-band comms launched via low-cost ESPA rideshare slot. Low budget ($3.5M), high margin efficiency.",
+          "subsystem_profile": "STR-ALU-01 + INST-OPT-01 + EPS-SOL-01 + EPS-BAT-01 + ANT-S-01 + ADCS-RW-02"
+        },
+        {
+          "name": "Dedicated Sub-Meter Commercial SmallSat",
+          "description": "Uses Hexagonal CFRP bus, intermediate telescope (INST-OPT-02), deployable GaAs wings, and X-band horn launched on a dedicated micro-launcher. Delivers 5x higher science return at $24M cost.",
+          "subsystem_profile": "STR-CFRP-02 + INST-OPT-02 + EPS-SOL-02 + EPS-BAT-02 + ANT-X-02 + ADCS-RW-02 + PROP-HYD-02"
+        }
+      ]
+    },
+    {
+      "id": "SCEN-02-LUNAR-PROSPECTOR",
+      "name": "Selene Core: Lunar South Pole Volatile & Ice Prospector",
+      "category": "LUNAR_EXPLORATION",
+      "difficulty": "SPECIALIST",
+      "target_destination": "Moon (Lunar Orbit)",
+      "mission_objective": "Map permanently shadowed craters (PSRs) at the lunar South Pole to quantify water-ice deposits and evaluate landing sites for human exploration.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 220.0,
+        "target_metrics": {
+          "subsurface_penetration_depth_m": 5.0,
+          "polar_coverage_pct": 92.0,
+          "altimeter_vertical_precision_m": 0.5
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Low Lunar Polar Orbit (LLPO-100)",
+          "orbit_type": "Lunar Polar Orbit",
+          "altitude_km": 100.0,
+          "inclination_deg": 90.0,
+          "eccentricity": 0.002,
+          "delta_v_insertion_ms": 820.0,
+          "pros": "Uniform coverage of both lunar poles; maximum spatial resolution for radar altimeter.",
+          "cons": "Unstable over long durations due to lunar mascons (gravitational anomalies); requires active periodic stationkeeping."
+        },
+        {
+          "name": "Frozen Elliptical Polar Orbit (FEPO 30x200)",
+          "orbit_type": "Lunar Frozen Orbit",
+          "altitude_km": 115.0,
+          "periapsis_km": 30.0,
+          "apoapsis_km": 200.0,
+          "inclination_deg": 86.2,
+          "eccentricity": 0.048,
+          "delta_v_insertion_ms": 680.0,
+          "pros": "Long-term orbital stability with minimal stationkeeping propellant; close periapsis passes over south pole.",
+          "cons": "Asymmetric resolution between northern and southern hemispheres."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.02,
+        "min_delta_v_ms": 950.0,
+        "mandatory_subsystems": ["SCIENTIFIC_INSTRUMENT", "PROPULSION_SYSTEM", "ELECTRICAL_POWER", "COMMUNICATION_ANTENNA", "ATTITUDE_CONTROL", "THERMAL_MANAGEMENT"]
+      },
+      "mission_duration_days": 270,
+      "budget_cap_usd": 85000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MEDIUM_LIFT", "HEAVY_LIFT"],
+        "launch_window_frequency_days": 14.0,
+        "c3_energy_km2_s2": -2.0
+      },
+      "environmental_challenges": [
+        "Severe lunar thermal extremes: 390 K in full sun down to 40 K in permanently shadowed regions",
+        "Lunar mascon gravitational perturbations causing rapid orbital eccentricity growth",
+        "Occultations by the Moon causing 45-minute continuous communication blackouts with Earth on every orbit"
+      ],
+      "success_criteria": {
+        "min_science_gb": 180.0,
+        "min_operational_days": 200
+      },
+      "failure_conditions": [
+        "Propellant exhaustion prior to lunar orbit insertion (spacecraft flys by into heliocentric graveyard)",
+        "Lunar surface impact caused by uncorrected mascon orbit decay",
+        "Thermal freezing of propulsion fuel lines during long lunar night passes"
+      ],
+      "optional_objectives": [
+        "Gravitational Field Mapping: Detect 3 major subsurface mascons via Doppler tracking",
+        "Permanent Shadow Penetration: Complete 500 radar passes over Shackleton crater",
+        "Extended Operations: Maintain orbit for >365 days using electric propulsion"
+      ],
+      "viable_architectures": [
+        {
+          "name": "High-Thrust Chemical Insertion Bus",
+          "description": "Utilizes hydrazine bipropellant for rapid Lunar Orbit Insertion (LOI) burn in 15 minutes, with heavy structural bus and X-band communication.",
+          "subsystem_profile": "STR-CFRP-02 + INST-OPT-02 + PROP-HYD-02 + EPS-SOL-02 + EPS-BAT-02 + ANT-X-02 + TCS-PIPE-02"
+        },
+        {
+          "name": "Solar Electric Spiral-In Explorer",
+          "description": "Uses Hall-effect electric propulsion with high Isp (1,850 s). Spirals slowly from high lunar orbit to 100 km over 45 days, saving massive propellant mass.",
+          "subsystem_profile": "STR-CFRP-02 + INST-OPT-02 + PROP-ION-03 + EPS-SOL-03 + EPS-BAT-03 + ANT-X-02 + TCS-PIPE-02"
+        }
+      ]
+    },
+    {
+      "id": "SCEN-03-MARS-RECONNAISSANCE",
+      "name": "Ares Echo: Mars Atmosphere & Subsurface Ice Mapper",
+      "category": "MARS_EXPLORATION",
+      "difficulty": "FLIGHT_DIRECTOR",
+      "target_destination": "Mars Orbit",
+      "mission_objective": "Conduct high-resolution atmospheric soundings and radar scans of Martian glacial sheets while acting as a telecom relay for future surface landers.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 850.0,
+        "target_metrics": {
+          "atmospheric_profile_vertical_res_km": 1.0,
+          "relay_service_availability_pct": 98.0,
+          "surface_radar_penetration_m": 25.0
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Low-Mars Circular Sun-Synchronous (MO-300-SSO)",
+          "orbit_type": "Areocentric Sun-Synchronous",
+          "altitude_km": 300.0,
+          "inclination_deg": 93.2,
+          "eccentricity": 0.005,
+          "delta_v_insertion_ms": 2100.0,
+          "pros": "Optimal for continuous surface imaging and maximum lander relay contact passes; constant solar illumination time.",
+          "cons": "Demands massive delta-V insertion (or aerobraking over 4 months); atmospheric dust drag during global dust storms."
+        },
+        {
+          "name": "Highly Elliptical Mars Insertion Orbit (HEMO 400x12000)",
+          "orbit_type": "Areocentric Elliptical",
+          "altitude_km": 6200.0,
+          "periapsis_km": 400.0,
+          "apoapsis_km": 12000.0,
+          "inclination_deg": 65.0,
+          "eccentricity": 0.58,
+          "delta_v_insertion_ms": 950.0,
+          "pros": "Saves >1,100 m/s in insertion propellant; broad hemispheric synoptic imaging at apoapsis.",
+          "cons": "Short nadir high-res observation windows at periapsis; highly variable communication link distances with surface assets."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.015,
+        "min_delta_v_ms": 1400.0,
+        "mandatory_subsystems": ["SCIENTIFIC_INSTRUMENT", "PROPULSION_SYSTEM", "ELECTRICAL_POWER", "COMMUNICATION_ANTENNA", "ONBOARD_COMPUTER", "DATA_STORAGE", "ATTITUDE_CONTROL", "THERMAL_MANAGEMENT"]
+      },
+      "mission_duration_days": 687,
+      "budget_cap_usd": 240000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MEDIUM_LIFT", "HEAVY_LIFT"],
+        "launch_window_frequency_days": 780.0,
+        "c3_energy_km2_s2": 15.5
+      },
+      "environmental_challenges": [
+        "Solar irradiance drops to 43% of Earth levels (~589 W/m²), requiring oversized solar panels",
+        "One-way communication light-time latency of 4 to 22 minutes (demands complete autonomous onboard fault recovery)",
+        "Global Martian dust storms coating solar arrays and heating the upper atmosphere",
+        "Interplanetary transit cruise phase lasting 7 to 9 months with deep-space cosmic radiation"
+      ],
+      "success_criteria": {
+        "min_science_gb": 700.0,
+        "min_operational_days": 500
+      },
+      "failure_conditions": [
+        "Critical onboard fault during Mars Orbit Insertion (MOI) burn causing mission loss",
+        "Failure to deploy solar arrays after cruise phase",
+        "Loss of autonomous lock due to ADCS star-tracker blinding during a solar particle event",
+        "Missed Earth launch window (incurs 26-month mission cancellation penalty)"
+      ],
+      "optional_objectives": [
+        "Lander Relay Pioneer: Transmit >500 GB of synthetic lander relay data back to Earth's Deep Space Network",
+        "Global Dust Storm Observer: Maintain full atmospheric monitoring through a category-5 planetary dust storm",
+        "Phobos Gravity Assist: Plan trajectory to perform a 50 km flyby of Phobos during insertion"
+      ],
+      "viable_architectures": [
+        {
+          "name": "Deep-Space Chemical Flagship",
+          "description": "Heavy-lift launch directly to high C3, heavy isogrid bus (STR-ISO-03), massive bipropellant tank, Ka-band parabolic dish, and high-efficiency triple-junction tracking wings.",
+          "subsystem_profile": "STR-ISO-03 + INST-OPT-02 + PROP-HYD-02 + EPS-SOL-03 + EPS-BAT-03 + ANT-KA-03 + OBC-RAD-02 + ADCS-ST-03"
+        },
+        {
+          "name": "High-Efficiency Dual-Engine Hybrid",
+          "description": "Utilizes chemical propulsion for trans-Mars injection and initial capture, followed by low-thrust Xenon Hall electric propulsion to circularize orbit over 90 days, cutting wet mass by 40%.",
+          "subsystem_profile": "STR-CFRP-02 + INST-OPT-02 + PROP-ION-03 + EPS-SOL-03 + EPS-BAT-03 + ANT-X-02 + OBC-AI-03 + ADCS-RW-02"
+        }
+      ]
+    },
+    {
+      "id": "SCEN-04-ASTEROID-INTERCEPT",
+      "name": "Didymos Recon: Near-Earth Asteroid Kinetic Deflection Scout",
+      "category": "ASTEROID_EXPLORATION",
+      "difficulty": "SPECIALIST",
+      "target_destination": "Near-Earth Asteroid (Didymos/Dimorphos System)",
+      "mission_objective": "Rendezvous with a binary near-Earth asteroid system, measure orbital deflection properties, and conduct multispectral compositional surface analysis.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 120.0,
+        "target_metrics": {
+          "relative_velocity_at_rendezvous_ms": 0.05,
+          "surface_composition_mapping_pct": 85.0,
+          "gravity_field_harmonics_orders": 4
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Direct Heliocentric Hohmann Intercept",
+          "orbit_type": "Interplanetary Heliocentric Transfer",
+          "altitude_km": 0.0,
+          "periapsis_km": 149600000.0,
+          "apoapsis_km": 245000000.0,
+          "inclination_deg": 3.4,
+          "eccentricity": 0.24,
+          "delta_v_insertion_ms": 1350.0,
+          "pros": "Short transit time (11 months); continuous direct communication visibility with Earth.",
+          "cons": "High hyperbolic excess velocity ($v_\\infty$) requiring large terminal rendezvous braking burn."
+        },
+        {
+          "name": "Earth Gravity Assist Resonant Trajectory (E-GART)",
+          "orbit_type": "Gravity Assist Interplanetary Transfer",
+          "altitude_km": 0.0,
+          "periapsis_km": 147000000.0,
+          "apoapsis_km": 195000000.0,
+          "inclination_deg": 1.2,
+          "eccentricity": 0.14,
+          "delta_v_insertion_ms": 620.0,
+          "pros": "Saves >700 m/s delta-V by utilizing Earth swing-by 1 year after launch.",
+          "cons": "Extends flight time to 2.4 years; requires high navigation accuracy during Earth flyby."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.01,
+        "min_delta_v_ms": 900.0,
+        "mandatory_subsystems": ["SCIENTIFIC_INSTRUMENT", "PROPULSION_SYSTEM", "ELECTRICAL_POWER", "COMMUNICATION_ANTENNA", "ONBOARD_COMPUTER", "ATTITUDE_CONTROL"]
+      },
+      "mission_duration_days": 800,
+      "budget_cap_usd": 120000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MEDIUM_LIFT", "RIDESHARE_ESPA"],
+        "launch_window_frequency_days": 365.0,
+        "c3_energy_km2_s2": 12.0
+      },
+      "environmental_challenges": [
+        "Micro-gravity environment around asteroid (< 0.0001 m/s²), where solar radiation pressure dominates trajectory",
+        "Severe rotational tumbling of asteroid targets creating rapid shadow-crossing thermal shocks",
+        "Autonomous optical navigation required for close proximity proximity operations (< 1 km)"
+      ],
+      "success_criteria": {
+        "min_science_gb": 90.0,
+        "min_operational_days": 600
+      },
+      "failure_conditions": [
+        "Hyperbolic flyby without braking: relative velocity never drops below asteroid escape velocity",
+        "Spacecraft collision with asteroid during proximity mapping",
+        "Loss of attitude control due to reaction wheel momentum saturation in microgravity without thruster desaturation"
+      ],
+      "optional_objectives": [
+        "Sub-Kilometer Close Hover: Maintain autonomous stationkeeping at < 500 meters from asteroid surface for 30 days",
+        "Binary Mass Determination: Calculate secondary moonlet mass to within 3% accuracy",
+        "Sample Tag-and-Touch Simulation: Perform simulated surface touch maneuver without landing gear damage"
+      ],
+      "viable_architectures": [
+        {
+          "name": "Solar Electric Ion Cruiser",
+          "description": "Equipped with Xenon Hall propulsion (`PROP-ION-03`) and articulated solar panels (`EPS-SOL-03`). Low wet mass, continuous low-thrust shaping for precise rendezvous.",
+          "subsystem_profile": "STR-CFRP-02 + INST-OPT-02 + INST-MAG-01 + PROP-ION-03 + EPS-SOL-03 + EPS-BAT-02 + ANT-X-02 + ADCS-ST-03"
+        },
+        {
+          "name": "Bipropellant Fast-Transit Interceptor",
+          "description": "Standard chemical spacecraft launched on dedicated Falcon 9. Higher propellant mass, but completes rendezvous in under 12 months.",
+          "subsystem_profile": "STR-ISO-03 + INST-OPT-02 + PROP-HYD-02 + EPS-SOL-02 + EPS-BAT-02 + ANT-X-02 + ADCS-ST-03"
+        }
+      ]
+    },
+    {
+      "id": "SCEN-05-DEEP-SPACE-HELIOSPHERE",
+      "name": "Helios Voyager: Interstellar Boundary & Solar Storm Probe",
+      "category": "DEEP_SPACE_SCIENTIFIC_PROBE",
+      "difficulty": "FLIGHT_DIRECTOR",
+      "target_destination": "Sun-Earth Lagrange L1 & Outer Heliopause Vector",
+      "mission_objective": "Measure solar wind dynamics, coronal mass ejections, and cosmic rays from an uninterrupted vantage point at Sun-Earth L1 before accelerating outward.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 60.0,
+        "target_metrics": {
+          "magnetic_field_sampling_rate_hz": 64.0,
+          "cme_early_warning_lead_time_min": 45.0,
+          "energetic_particle_energy_range_mev": 100.0
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Sun-Earth Lagrange L1 Halo Orbit",
+          "orbit_type": "L1 Lissajous / Halo Orbit",
+          "altitude_km": 1500000.0,
+          "inclination_deg": 0.0,
+          "eccentricity": 0.0,
+          "delta_v_insertion_ms": 380.0,
+          "pros": "Zero eclipses ever (100% continuous solar power); uninterrupted line-of-sight to the Sun; constant Earth geometry.",
+          "cons": "Inherently unstable orbit (saddle point) requiring stationkeeping delta-V every 20 days; 1.5 million km comms distance."
+        },
+        {
+          "name": "Earth-Trailing Heliocentric Drift (Spitzer-style)",
+          "orbit_type": "Heliocentric Drift",
+          "altitude_km": 0.0,
+          "periapsis_km": 149000000.0,
+          "apoapsis_km": 153000000.0,
+          "inclination_deg": 0.1,
+          "eccentricity": 0.015,
+          "delta_v_insertion_ms": 120.0,
+          "pros": "Completely passive orbit; zero stationkeeping propulsion needed; zero thermal interference from Earth.",
+          "cons": "Distance to Earth increases by ~15 million km every year, causing severe RF link margin degradation over time."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.08,
+        "min_delta_v_ms": 450.0,
+        "mandatory_subsystems": ["SCIENTIFIC_INSTRUMENT", "ELECTRICAL_POWER", "COMMUNICATION_ANTENNA", "ONBOARD_COMPUTER", "ATTITUDE_CONTROL", "DATA_STORAGE"]
+      },
+      "mission_duration_days": 1095,
+      "budget_cap_usd": 180000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MEDIUM_LIFT", "HEAVY_LIFT"],
+        "launch_window_frequency_days": 30.0,
+        "c3_energy_km2_s2": -0.5
+      },
+      "environmental_challenges": [
+        "Unmitigated deep-space radiation environment (cosmic rays, solar proton events)",
+        "Zero planetary magnetic field to aid in attitude desaturation (magnetorquers completely ineffective)",
+        "Extremely faint radio signal levels across 1.5 to 50 million kilometers"
+      ],
+      "success_criteria": {
+        "min_science_gb": 50.0,
+        "min_operational_days": 900
+      },
+      "failure_conditions": [
+        "Stationkeeping fuel exhaustion in L1 halo orbit, causing spacecraft to drift away uncontrollably",
+        "Single-Event Burnout of flight computer during a major Coronal Mass Ejection",
+        "Loss of high-gain antenna Earth-pointing lock with no omnidirectional link recovery"
+      ],
+      "optional_objectives": [
+        "Space Weather Real-Time Alert: Successfully downlink CME detection alert within 15 minutes of occurrence",
+        "Three-Year Uninterrupted Telemetry: Maintain 99.5% link uptime across 3 calendar years",
+        "Zero-Battery Operations: Operate the probe with minimal battery reserve utilizing continuous L1 solar flux"
+      ],
+      "viable_architectures": [
+        {
+          "name": "High-Reliability Rad-Hard Monitor",
+          "description": "Utilizes BAE RAD750 processor (`OBC-RAD-02`), fluxgate magnetometer on deployable boom (`INST-MAG-01`), steerable Ka-band dish, and cold gas desaturation.",
+          "subsystem_profile": "STR-CFRP-02 + INST-MAG-01 + EPS-SOL-02 + EPS-BAT-02 + ANT-KA-03 + OBC-RAD-02 + PROP-CG-01 + ADCS-RW-02"
+        },
+        {
+          "name": "Micro-Probe Long-Baseline Fleet",
+          "description": "Compact bus with body-mounted arrays, low-power transmitters, and multi-year drift trajectory, minimizing overall mission lifecycle cost.",
+          "subsystem_profile": "STR-ALU-01 + INST-MAG-01 + EPS-SOL-01 + EPS-BAT-01 + ANT-X-02 + OBC-LEON-01 + ADCS-RW-02"
+        }
+      ]
+    },
+    {
+      "id": "SCEN-06-GEO-COMMS-TRUNK",
+      "name": "TerraLink Gateway: High-Throughput Geostationary Telecom Hub",
+      "category": "COMMUNICATIONS_SATELLITE",
+      "difficulty": "CADET",
+      "target_destination": "Geostationary Orbit (GEO)",
+      "mission_objective": "Provide continuous, high-availability multi-gigabit broadband and sovereign emergency communication relay over a designated continental landmass.",
+      "scientific_requirements": {
+        "primary_data_threshold_gb": 25000.0,
+        "target_metrics": {
+          "operational_availability_pct": 99.99,
+          "throughput_capacity_gbps": 12.0,
+          "orbital_slot_stationkeeping_deg": 0.05
+        }
+      },
+      "orbit_trajectory_options": [
+        {
+          "name": "Standard Geostationary Orbit (GEO-35786)",
+          "orbit_type": "Geostationary Orbit (GEO)",
+          "altitude_km": 35786.0,
+          "inclination_deg": 0.0,
+          "eccentricity": 0.0,
+          "delta_v_insertion_ms": 1500.0,
+          "pros": "Satellite appears permanently stationary from the ground; zero ground antenna tracking required; 24/7 continuous coverage of 1/3 of Earth.",
+          "cons": "High launch energy / insertion delta-V required from GTO to GEO; high latency (~250 ms round trip); severe radiation environment (Van Allen outer belt)."
+        },
+        {
+          "name": "Inclined Geosynchronous Orbit (IGSO-35786-28deg)",
+          "orbit_type": "Geosynchronous Orbit (GSO)",
+          "altitude_km": 35786.0,
+          "inclination_deg": 28.5,
+          "eccentricity": 0.0,
+          "delta_v_insertion_ms": 0.0,
+          "pros": "Zero plane-change delta-V needed from Cape Canaveral GTO; higher daily elevation coverage over mid-to-high latitudes.",
+          "cons": "Ground ground-tracks trace a figure-8 figure; ground stations require active mechanical tracking antennas."
+        }
+      ],
+      "required_spacecraft_capabilities": {
+        "min_pointing_accuracy_deg": 0.02,
+        "min_delta_v_ms": 1600.0,
+        "mandatory_subsystems": ["COMMUNICATION_ANTENNA", "ELECTRICAL_POWER", "PROPULSION_SYSTEM", "ATTITUDE_CONTROL", "THERMAL_MANAGEMENT", "SPACECRAFT_STRUCTURE"]
+      },
+      "mission_duration_days": 1825,
+      "budget_cap_usd": 150000000.0,
+      "launch_constraints": {
+        "compatible_launch_classes": ["MEDIUM_LIFT", "HEAVY_LIFT"],
+        "launch_window_frequency_days": 1.0,
+        "c3_energy_km2_s2": -18.0
+      },
+      "environmental_challenges": [
+        "Intense outer Van Allen radiation belt electrons causing electrostatic surface charging",
+        "Bi-annual equinoctial eclipse seasons (up to 72 minutes of darkness per day for 45 consecutive days)",
+        "Lunar and solar gravitational perturbations demanding constant North-South inclination stationkeeping burns (~50 m/s per year)"
+      ],
+      "success_criteria": {
+        "min_science_gb": 20000.0,
+        "min_operational_days": 1500
+      },
+      "failure_conditions": [
+        "Exceeding allocated orbital slot box (±0.05°) violating ITU radio regulations and risking collision",
+        "Complete battery depletion during the critical 72-minute equinox midnight eclipse",
+        "Thermal runaway of high-power RF transponder amplifiers"
+      ],
+      "optional_objectives": [
+        "15-Year Life Guarantee: Retain sufficient propellant reserve for 15 full years of operational stationkeeping",
+        "All-Electric Orbit Raising: Perform GTO-to-GEO transfer exclusively using Xenon Hall thrusters, saving >1,000 kg launch mass",
+        "Graveyard Disposal: Successfully boost spacecraft 300 km above GEO at end-of-life per IADC space debris guidelines"
+      ],
+      "viable_architectures": [
+        {
+          "name": "Classic High-Thrust Bipropellant GEO Bus",
+          "description": "Uses heavy-lift launcher into GTO, onboard liquid apogee engine (hydrazine/NTO) for 3-day circularization, massive deployable solar arrays, and Ka-band reflector dishes.",
+          "subsystem_profile": "STR-ISO-03 + PROP-HYD-02 + EPS-SOL-03 + EPS-BAT-03 + ANT-KA-03 + TCS-PIPE-02 + ADCS-ST-03"
+        },
+        {
+          "name": "Modern All-Electric High-Throughput Satellite (HTS)",
+          "description": "Utilizes dual Xenon Hall electric thrusters (`PROP-ION-03`) for both GTO-to-GEO orbit raising and 15-year North-South stationkeeping, reducing launch mass by over 50%.",
+          "subsystem_profile": "STR-CFRP-02 + PROP-ION-03 + EPS-SOL-03 + EPS-BAT-03 + ANT-KA-03 + TCS-CRYO-03 + ADCS-ST-03"
+        }
+      ]
+    }
+  ]
+}
