@@ -2,9 +2,9 @@
   "name": "Titan Vanguard Agency",
   "callsign": "VANGUARD-01",
   "director_role": "LEAD_PLANETARY_SCIENTIST",
-  "funds_usd": 2377925000.0,
+  "funds_usd": 2301675000.0,
   "reputation": 100,
-  "research_points": 14537,
+  "research_points": 14634,
   "active_contract_id": "SCEN-01-EO-SENTINEL",
   "unlocked_tech_ids": [
     "TECH-OPT-01",
@@ -18,6 +18,16 @@
     "TECH-RADAR-03"
   ],
   "completed_mission_logs": [
+    {
+      "session_id": "SIM-3238CA07",
+      "mission_id": "SCEN-01-EO-SENTINEL",
+      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
+      "score": 947,
+      "rank": "A+ (MASTER ARCHITECT)",
+      "payout_usd": 15750000.0,
+      "rp_earned": 97,
+      "date": "2026-11-14"
+    },
     {
       "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
       "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
