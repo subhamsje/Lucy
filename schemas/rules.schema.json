@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbitalarchitect.space/schemas/rules.schema.json",
+  "title": "CompatibilityAndValidationRules",
+  "description": "Rules engine schema for enforcing physical, electrical, geometric, and functional compatibility across spacecraft components",
+  "type": "object",
+  "required": [
+    "chassis_rules",
+    "voltage_bus_rules",
+    "pointing_budget_rules",
+    "thermal_rejection_rules",
+    "energy_balance_rules",
+    "mass_margin_rules"
+  ],
+  "properties": {
+    "chassis_rules": {
+      "type": "object",
+      "description": "Enforces volumetric and mass limits per chassis class",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["max_payload_mass_kg", "allowed_tiers", "allowed_categories"],
+        "properties": {
+          "max_payload_mass_kg": { "type": "number" },
+          "max_power_dissipation_w": { "type": "number" },
+          "allowed_tiers": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["BASIC", "INTERMEDIATE", "ADVANCED"] }
+          },
+          "allowed_categories": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "voltage_bus_rules": {
+      "type": "object",
+      "description": "Validates that all active components operate on a common bus voltage or valid DC-DC converter line"
+    },
+    "pointing_budget_rules": {
+      "type": "object",
+      "description": "Ensures that ADCS pointing accuracy is smaller than or equal to the minimum instrument requirement"
+    },
+    "thermal_rejection_rules": {
+      "type": "object",
+      "description": "Ensures that TCS heat rejection capacity meets or exceeds total internal electronic dissipation"
+    },
+    "energy_balance_rules": {
+      "type": "object",
+      "description": "Verifies that daytime solar generation replenishes nighttime battery discharge plus margin"
+    },
+    "mass_margin_rules": {
+      "type": "object",
+      "description": "Enforces AIAA S-120 Mass Growth Allowance (MGA) thresholds"
+    }
+  }
+}

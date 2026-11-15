@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbitalarchitect.space/schemas/component.schema.json",
+  "title": "SpacecraftComponent",
+  "description": "Standardized schema for all spacecraft components in the Space Mission Design Game (Lucy)",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "category",
+    "tier",
+    "description",
+    "mass_kg",
+    "cost_usd",
+    "power_consumption_w",
+    "power_generation_w",
+    "data_generation_mb_per_day",
+    "storage_capacity_gb",
+    "performance_metrics",
+    "reliability",
+    "compatibility",
+    "trade_offs",
+    "reference_source"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{3,4}-[A-Z0-9_-]+$",
+      "description": "Unique component identifier, e.g. INST-OPT-01, EPS-SOL-02"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "SCIENTIFIC_INSTRUMENT",
+        "SOLAR_PANEL",
+        "BATTERY",
+        "COMMUNICATION_ANTENNA",
+        "ONBOARD_COMPUTER",
+        "PROPULSION_SYSTEM",
+        "ATTITUDE_CONTROL",
+        "THERMAL_MANAGEMENT",
+        "SPACECRAFT_STRUCTURE",
+        "DATA_STORAGE"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["BASIC", "INTERMEDIATE", "ADVANCED"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "mass_kg": {
+      "type": "number",
+      "minimum": 0.01
+    },
+    "power_consumption_w": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Nominal operational power consumption in Watts"
+    },
+    "power_generation_w": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Power generated at 1 AU under direct solar incidence, 0 if not applicable"
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 1000
+    },
+    "data_generation_mb_per_day": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "storage_capacity_gb": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "performance_metrics": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Subsystem-specific quantitative metrics (e.g., Isp, gain_dbi, gsd_m, radiator_area_m2)"
+    },
+    "reliability": {
+      "type": "object",
+      "required": ["mtbf_hours", "trl", "failure_probability_annual"],
+      "properties": {
+        "mtbf_hours": {
+          "type": "number",
+          "minimum": 1000
+        },
+        "trl": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "Technology Readiness Level"
+        },
+        "failure_probability_annual": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "radiation_tolerance_krad": {
+          "type": "number",
+          "minimum": 0.0
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["required_bus_voltage_v", "supported_chassis_classes"],
+      "properties": {
+        "required_bus_voltage_v": {
+          "type": "number",
+          "enum": [5, 12, 28, 50, 100]
+        },
+        "required_pointing_accuracy_deg": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "requires_deployable_boom": {
+          "type": "boolean"
+        },
+        "requires_cryocooler": {
+          "type": "boolean"
+        },
+        "requires_stationkeeping_thrusters": {
+          "type": "boolean"
+        },
+        "supported_chassis_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["CUBESAT_12U", "SMALLSAT_LEO", "MEDIUM_BUS", "HEAVY_PROBE"]
+          }
+        },
+        "excluded_with": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Component IDs that cannot coexist with this component"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Component IDs or category capabilities required to function"
+        }
+      }
+    },
+    "trade_offs": {
+      "type": "object",
+      "required": ["advantages", "disadvantages", "engineering_trade_off"],
+      "properties": {
+        "advantages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disadvantages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "engineering_trade_off": {
+          "type": "string"
+        }
+      }
+    },
+    "reference_source": {
+      "type": "object",
+      "required": ["heritage_reference", "benchmark_notes"],
+      "properties": {
+        "heritage_reference": {
+          "type": "string",
+          "description": "Real mission or NASA/ESA benchmark, e.g. NASA Landsat-8 OLI, Planet Dove, New Horizons REX"
+        },
+        "benchmark_notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

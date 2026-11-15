@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbitalarchitect.space/schemas/scenario.schema.json",
+  "title": "MissionScenario",
+  "description": "Schema for Mission Scenarios in the Space Mission Design Game (Orbital Architect / Lucy)",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "category",
+    "difficulty",
+    "target_destination",
+    "mission_objective",
+    "scientific_requirements",
+    "orbit_trajectory_options",
+    "required_spacecraft_capabilities",
+    "mission_duration_days",
+    "budget_cap_usd",
+    "launch_constraints",
+    "environmental_challenges",
+    "success_criteria",
+    "failure_conditions",
+    "optional_objectives",
+    "viable_architectures"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "category": { "type": "string" },
+    "difficulty": { "type": "string", "enum": ["CADET", "SPECIALIST", "FLIGHT_DIRECTOR"] },
+    "target_destination": { "type": "string" },
+    "mission_objective": { "type": "string" },
+    "scientific_requirements": {
+      "type": "object",
+      "required": ["primary_data_threshold_gb", "target_metrics"],
+      "properties": {
+        "primary_data_threshold_gb": { "type": "number" },
+        "target_metrics": { "type": "object" }
+      }
+    },
+    "orbit_trajectory_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "orbit_type", "altitude_km", "inclination_deg", "delta_v_insertion_ms", "pros", "cons"],
+        "properties": {
+          "name": { "type": "string" },
+          "orbit_type": { "type": "string" },
+          "altitude_km": { "type": "number" },
+          "periapsis_km": { "type": "number" },
+          "apoapsis_km": { "type": "number" },
+          "inclination_deg": { "type": "number" },
+          "eccentricity": { "type": "number" },
+          "delta_v_insertion_ms": { "type": "number" },
+          "pros": { "type": "string" },
+          "cons": { "type": "string" }
+        }
+      }
+    },
+    "required_spacecraft_capabilities": {
+      "type": "object",
+      "required": ["min_pointing_accuracy_deg", "mandatory_subsystems"],
+      "properties": {
+        "min_pointing_accuracy_deg": { "type": "number" },
+        "min_delta_v_ms": { "type": "number" },
+        "mandatory_subsystems": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "mission_duration_days": { "type": "integer" },
+    "budget_cap_usd": { "type": "number" },
+    "launch_constraints": {
+      "type": "object",
+      "required": ["compatible_launch_classes", "launch_window_frequency_days"],
+      "properties": {
+        "compatible_launch_classes": { "type": "array", "items": { "type": "string" } },
+        "c3_energy_km2_s2": { "type": "number" },
+        "launch_window_frequency_days": { "type": "number" }
+      }
+    },
+    "environmental_challenges": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "success_criteria": {
+      "type": "object",
+      "required": ["min_science_gb", "min_operational_days"],
+      "properties": {
+        "min_science_gb": { "type": "number" },
+        "min_operational_days": { "type": "integer" }
+      }
+    },
+    "failure_conditions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "optional_objectives": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "viable_architectures": {
+      "type": "array",
+      "description": "Multiple valid engineering pathways to solve this scenario",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "subsystem_profile"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "subsystem_profile": { "type": "string" }
+        }
+      }
+    }
+  }
+}
