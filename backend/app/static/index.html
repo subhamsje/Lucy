@@ -4976,7 +4976,7 @@
       }
       runLiveEngineeringValidation();
       renderCatalogList();
-      renderChassisManifest();
+      if (typeof renderChassisManifest === 'function') renderChassisManifest();
       updateCadMeshWingSpan();
       const activeTabBtn = document.querySelector('.subsys-tab.active');
       if (activeTabBtn) {
@@ -5589,27 +5589,34 @@
           body: JSON.stringify(payload)
         });
         const result = await res.json();
+        if (!res.ok) {
+          const errMsg = result.detail || result.message || `Simulation error (HTTP ${res.status})`;
+          throw new Error(typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg);
+        }
         AppState.latestSimulation = result;
         updateReportWorkstation(result);
         navigateWorkstation('VIEW_REPORTS');
       } catch (err) {
-        alert("Flight simulation failed: " + err);
+        alert("Flight simulation failed: " + (err.message || err));
       }
     }
 
     function updateReportWorkstation(res) {
-      document.getElementById('reportOutcomeHeader').innerText = res.outcome === 'SUCCESS' ? 'MISSION COMPLETE: FULL SUCCESS' : 'MISSION ABORT: CRITICAL FAILURE';
-      document.getElementById('reportOutcomeHeader').style.color = res.outcome === 'SUCCESS' ? 'var(--status-nominal)' : 'var(--status-warning)';
+      if (!res) return;
+      const isSuccess = res.outcome === 'SUCCESS';
+      document.getElementById('reportOutcomeHeader').innerText = isSuccess ? 'MISSION COMPLETE: FULL SUCCESS' : (res.outcome === 'PARTIAL_SUCCESS' ? 'MISSION COMPLETE: PARTIAL SUCCESS' : 'MISSION ABORT: CRITICAL FAILURE');
+      document.getElementById('reportOutcomeHeader').style.color = isSuccess ? 'var(--status-nominal)' : (res.outcome === 'PARTIAL_SUCCESS' ? 'var(--status-caution)' : 'var(--status-warning)');
       
       const scoreEl = document.getElementById('reportScore');
       const gradeEl = document.getElementById('reportGrade');
-      gradeEl.innerText = res.honor_grade;
-      document.getElementById('reportScience').innerText = `${res.total_science_gb} GB`;
+      gradeEl.innerText = res.honor_grade || 'NOMINAL';
+      document.getElementById('reportScience').innerText = `${res.total_science_gb ?? 0} GB`;
 
+      const finalScore = res.final_eir_score ?? 0;
       if (typeof gsap !== 'undefined' && AppState.fxQuality !== 'LOW') {
         const scoreObj = { val: 0 };
         gsap.to(scoreObj, {
-          val: res.final_eir_score,
+          val: finalScore,
           duration: 1.4,
           ease: "power2.out",
           onUpdate: () => {
@@ -5618,15 +5625,24 @@
         });
         gsap.fromTo(gradeEl, { scale: 0.1, opacity: 0 }, { scale: 1.0, opacity: 1, duration: 0.7, ease: "back.out(2)" });
       } else {
-        scoreEl.innerText = res.final_eir_score;
+        scoreEl.innerText = finalScore;
       }
 
-      document.getElementById('repScoreObj').innerText = `${res.score_breakdown.objective_fulfillment} / 250`;
-      document.getElementById('repScoreSci').innerText = `${res.score_breakdown.science_achievement} / 150`;
-      document.getElementById('repScoreMass').innerText = `${res.score_breakdown.mass_margin_rigor} / 120`;
-      document.getElementById('repScorePwr').innerText = `${res.score_breakdown.energy_efficiency} / 100`;
-      document.getElementById('repScoreBud').innerText = `${res.score_breakdown.budget_efficiency} / 100`;
-      document.getElementById('repScoreCom').innerText = `${res.score_breakdown.comms_performance} / 80`;
+      const sb = res.score_breakdown || {
+        objective_fulfillment: 250.0,
+        science_achievement: 150.0,
+        mass_margin_rigor: 120.0,
+        energy_efficiency: 100.0,
+        budget_efficiency: 100.0,
+        comms_performance: 80.0
+      };
+
+      document.getElementById('repScoreObj').innerText = `${sb.objective_fulfillment ?? 0} / 250`;
+      document.getElementById('repScoreSci').innerText = `${sb.science_achievement ?? 0} / 150`;
+      document.getElementById('repScoreMass').innerText = `${sb.mass_margin_rigor ?? 0} / 120`;
+      document.getElementById('repScorePwr').innerText = `${sb.energy_efficiency ?? 0} / 100`;
+      document.getElementById('repScoreBud').innerText = `${sb.budget_efficiency ?? 0} / 100`;
+      document.getElementById('repScoreCom').innerText = `${sb.comms_performance ?? 0} / 80`;
 
       // Live Agency Reward Synchronization
       if (res.agency_reward) {
