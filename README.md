@@ -88,7 +88,11 @@ $$\theta_{\text{diffraction}} = 1.22 \frac{\lambda}{D}$$
 - Python 3.10+
 - Modern WebGL-compatible browser (Chrome, Edge, Firefox, Safari)
 
-### Installation
+### One-Click Launchers
+- **Windows**: Double-click [`run.bat`](run.bat) (or run `run.bat` in Command Prompt / PowerShell)
+- **macOS / Linux**: Run `./run.sh`
+
+### Manual Installation
 ```bash
 # Clone the repository
 git clone https://github.com/subhamsje/Lucy.git
