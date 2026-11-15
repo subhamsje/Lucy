@@ -1,0 +1,42 @@
+{
+  "session_id": "SIM-FLIGHT-NASA-77",
+  "scenario_id": "SCN-EARTH-OBS-01",
+  "outcome": "SUCCESS",
+  "total_science_gb": 1280.4,
+  "operational_days_survived": 365,
+  "final_eir_score": 947,
+  "honor_grade": "A+",
+  "score_breakdown": {
+    "objective_fulfillment": 245.0,
+    "science_achievement": 145.0,
+    "mass_margin_rigor": 115.0,
+    "energy_efficiency": 95.0,
+    "budget_efficiency": 95.0,
+    "comms_performance": 78.0
+  },
+  "agency_reward": {
+    "payout_usd": 12500000,
+    "rp_earned": 850,
+    "rep_change": 8
+  },
+  "anomalies_encountered": [
+    { "name": "Atmospheric Density Variation - Drag Perturbation", "met_day": 45, "severity": "NOMINAL" },
+    { "name": "Single Event Upset (SEU) in Optical Sensor Bus", "met_day": 132, "severity": "LOW" },
+    { "name": "Solar Cell Thermal Cycling Stress", "met_day": 280, "severity": "LOW" }
+  ],
+  "telemetry_time_series": [
+    {"met_seconds": 0, "orbit_number": 1, "true_anomaly_deg": 0.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 23.2, "data_buffer_used_gb": 0.0, "reaction_wheel_rpm": 2200.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 0.0},
+    {"met_seconds": 480, "orbit_number": 1, "true_anomaly_deg": 30.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 23.5, "data_buffer_used_gb": 3.8, "reaction_wheel_rpm": 2235.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 1.8},
+    {"met_seconds": 960, "orbit_number": 1, "true_anomaly_deg": 60.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 23.8, "data_buffer_used_gb": 7.6, "reaction_wheel_rpm": 2270.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 3.6},
+    {"met_seconds": 1440, "orbit_number": 1, "true_anomaly_deg": 90.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 24.1, "data_buffer_used_gb": 2.4, "reaction_wheel_rpm": 2305.0, "current_downlink_rate_mbps": 120.0, "cumulative_science_gb": 5.4},
+    {"met_seconds": 1920, "orbit_number": 1, "true_anomaly_deg": 120.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 23.6, "data_buffer_used_gb": 0.8, "reaction_wheel_rpm": 2340.0, "current_downlink_rate_mbps": 120.0, "cumulative_science_gb": 7.2},
+    {"met_seconds": 2400, "orbit_number": 1, "true_anomaly_deg": 150.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 22.8, "data_buffer_used_gb": 4.6, "reaction_wheel_rpm": 2375.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 9.0},
+    {"met_seconds": 2880, "orbit_number": 1, "true_anomaly_deg": 180.0, "is_in_eclipse": false, "battery_soc_pct": 100.0, "bus_temperature_c": 21.9, "data_buffer_used_gb": 8.4, "reaction_wheel_rpm": 2410.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 10.8},
+    {"met_seconds": 3360, "orbit_number": 1, "true_anomaly_deg": 210.0, "is_in_eclipse": true, "battery_soc_pct": 92.8, "bus_temperature_c": 16.4, "data_buffer_used_gb": 12.2, "reaction_wheel_rpm": 2445.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 12.6},
+    {"met_seconds": 3840, "orbit_number": 1, "true_anomaly_deg": 240.0, "is_in_eclipse": true, "battery_soc_pct": 85.6, "bus_temperature_c": 14.8, "data_buffer_used_gb": 16.0, "reaction_wheel_rpm": 2480.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 14.4},
+    {"met_seconds": 4320, "orbit_number": 1, "true_anomaly_deg": 270.0, "is_in_eclipse": true, "battery_soc_pct": 78.4, "bus_temperature_c": 14.2, "data_buffer_used_gb": 19.8, "reaction_wheel_rpm": 2515.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 16.2},
+    {"met_seconds": 4800, "orbit_number": 1, "true_anomaly_deg": 300.0, "is_in_eclipse": true, "battery_soc_pct": 71.2, "bus_temperature_c": 14.9, "data_buffer_used_gb": 23.6, "reaction_wheel_rpm": 2550.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 18.0},
+    {"met_seconds": 5280, "orbit_number": 1, "true_anomaly_deg": 330.0, "is_in_eclipse": false, "battery_soc_pct": 88.6, "bus_temperature_c": 20.5, "data_buffer_used_gb": 27.4, "reaction_wheel_rpm": 2585.0, "current_downlink_rate_mbps": 0.0, "cumulative_science_gb": 19.8}
+  ],
+  "verification_hash": "CERT-EIR-NASA-JPL-947"
+}

@@ -1,0 +1,20 @@
+{
+  "is_certified": true,
+  "resource_budgets": {
+    "wet_mass_kg": 201.2,
+    "dry_mass_kg": 145.0,
+    "launcher_capacity_kg": 250.0,
+    "mass_margin_pct": 19.5,
+    "day_power_generation_w": 350.0,
+    "night_power_load_w": 165.0,
+    "battery_depth_of_discharge_pct": 22.4,
+    "eclipse_duration_min": 35.8,
+    "link_margin_db": 15.4,
+    "rf_downlink_rate_mbps": 120.0,
+    "storage_capacity_gb": 64.0,
+    "propellant_mass_kg": 56.2,
+    "delta_v_ms": 1420.0,
+    "delta_v_margin_pct": 22.0
+  },
+  "rule_violations": []
+}
