@@ -2,9 +2,9 @@
   "name": "Titan Vanguard Agency",
   "callsign": "VANGUARD-01",
   "director_role": "LEAD_PLANETARY_SCIENTIST",
-  "funds_usd": 1983050000.0,
+  "funds_usd": 2219975000.0,
   "reputation": 100,
-  "research_points": 11537,
+  "research_points": 13337,
   "active_contract_id": "SCEN-01-EO-SENTINEL",
   "unlocked_tech_ids": [
     "TECH-OPT-01",
@@ -18,6 +18,96 @@
     "TECH-RADAR-03"
   ],
   "completed_mission_logs": [
+    {
+      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
+      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
+      "score": 92,
+      "rank": "NASA FLIGHT CERTIFIED",
+      "payout_usd": 11000000.0,
+      "rp_earned": 120,
+      "date": "2026-11-15",
+      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
+    },
+    {
+      "mission_id": "TITAN-SURFACE-EVA",
+      "mission_name": "Titan: Last Transmission Surface Expedition",
+      "score": 88,
+      "rank": "HISTORIC NASA EXPEDITION",
+      "payout_usd": 70000000.0,
+      "rp_earned": 375,
+      "date": "2026-11-15",
+      "details": "Test verification of persistent expedition bridge"
+    },
+    {
+      "session_id": "SIM-48899BCF",
+      "mission_id": "SCEN-01-EO-SENTINEL",
+      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
+      "score": 1104,
+      "rank": "A+ (MASTER ARCHITECT)",
+      "payout_usd": 15750000.0,
+      "rp_earned": 105,
+      "date": "2026-11-14"
+    },
+    {
+      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
+      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
+      "score": 92,
+      "rank": "NASA FLIGHT CERTIFIED",
+      "payout_usd": 11000000.0,
+      "rp_earned": 120,
+      "date": "2026-11-15",
+      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
+    },
+    {
+      "mission_id": "TITAN-SURFACE-EVA",
+      "mission_name": "Titan: Last Transmission Surface Expedition",
+      "score": 88,
+      "rank": "HISTORIC NASA EXPEDITION",
+      "payout_usd": 70000000.0,
+      "rp_earned": 375,
+      "date": "2026-11-15",
+      "details": "Test verification of persistent expedition bridge"
+    },
+    {
+      "session_id": "SIM-57CDB69E",
+      "mission_id": "SCEN-01-EO-SENTINEL",
+      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
+      "score": 1104,
+      "rank": "A+ (MASTER ARCHITECT)",
+      "payout_usd": 15750000.0,
+      "rp_earned": 105,
+      "date": "2026-11-14"
+    },
+    {
+      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
+      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
+      "score": 92,
+      "rank": "NASA FLIGHT CERTIFIED",
+      "payout_usd": 11000000.0,
+      "rp_earned": 120,
+      "date": "2026-11-15",
+      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
+    },
+    {
+      "mission_id": "TITAN-SURFACE-EVA",
+      "mission_name": "Titan: Last Transmission Surface Expedition",
+      "score": 88,
+      "rank": "HISTORIC NASA EXPEDITION",
+      "payout_usd": 70000000.0,
+      "rp_earned": 375,
+      "date": "2026-11-15",
+      "details": "Test verification of persistent expedition bridge"
+    },
+    {
+      "session_id": "SIM-02034D8D",
+      "mission_id": "SCEN-01-EO-SENTINEL",
+      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
+      "score": 1104,
+      "rank": "A+ (MASTER ARCHITECT)",
+      "payout_usd": 15750000.0,
+      "rp_earned": 105,
+      "date": "2026-11-14"
+    },
     {
       "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
       "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
@@ -177,96 +267,6 @@
       "rp_earned": 135,
       "date": "2026-11-15",
       "details": "Validated Mars mission reports archive deposit."
-    },
-    {
-      "mission_id": "MARS-COMBINED-EXPEDITION_MASTER",
-      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_MASTER)",
-      "score": 96,
-      "rank": "NASA FLIGHT CERTIFIED",
-      "payout_usd": 11500000.0,
-      "rp_earned": 135,
-      "date": "2026-11-15",
-      "details": "Validated Mars mission reports archive deposit."
-    },
-    {
-      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
-      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
-      "score": 92,
-      "rank": "NASA FLIGHT CERTIFIED",
-      "payout_usd": 11000000.0,
-      "rp_earned": 120,
-      "date": "2026-11-15",
-      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
-    },
-    {
-      "mission_id": "TITAN-SURFACE-EVA",
-      "mission_name": "Titan: Last Transmission Surface Expedition",
-      "score": 88,
-      "rank": "HISTORIC NASA EXPEDITION",
-      "payout_usd": 70000000.0,
-      "rp_earned": 375,
-      "date": "2026-11-15",
-      "details": "Test verification of persistent expedition bridge"
-    },
-    {
-      "session_id": "SIM-8AADF97B",
-      "mission_id": "SCEN-01-EO-SENTINEL",
-      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
-      "score": 1104,
-      "rank": "A+ (MASTER ARCHITECT)",
-      "payout_usd": 15750000.0,
-      "rp_earned": 105,
-      "date": "2026-11-14"
-    },
-    {
-      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
-      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
-      "score": 92,
-      "rank": "NASA FLIGHT CERTIFIED",
-      "payout_usd": 11000000.0,
-      "rp_earned": 120,
-      "date": "2026-11-15",
-      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
-    },
-    {
-      "mission_id": "TITAN-SURFACE-EVA",
-      "mission_name": "Titan: Last Transmission Surface Expedition",
-      "score": 88,
-      "rank": "HISTORIC NASA EXPEDITION",
-      "payout_usd": 70000000.0,
-      "rp_earned": 375,
-      "date": "2026-11-15",
-      "details": "Test verification of persistent expedition bridge"
-    },
-    {
-      "session_id": "SIM-DC1B7B28",
-      "mission_id": "SCEN-01-EO-SENTINEL",
-      "mission_name": "Ignis Sentinel: Global Wildfire & Biosphere Early Warning",
-      "score": 1104,
-      "rank": "A+ (MASTER ARCHITECT)",
-      "payout_usd": 15750000.0,
-      "rp_earned": 105,
-      "date": "2026-11-14"
-    },
-    {
-      "mission_id": "MARS-COMBINED-EXPEDITION_MASTER",
-      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_MASTER)",
-      "score": 96,
-      "rank": "NASA FLIGHT CERTIFIED",
-      "payout_usd": 11500000.0,
-      "rp_earned": 135,
-      "date": "2026-11-15",
-      "details": "Validated Mars mission reports archive deposit."
-    },
-    {
-      "mission_id": "MARS-COMBINED-EXPEDITION_OMEGA",
-      "mission_name": "Mars Exploration: COMBINED (EXPEDITION_OMEGA)",
-      "score": 92,
-      "rank": "NASA FLIGHT CERTIFIED",
-      "payout_usd": 11000000.0,
-      "rp_earned": 120,
-      "date": "2026-11-15",
-      "details": "Completed combined orbital reconnaissance & Jezero mudstone rover exploration."
     }
   ]
 }
