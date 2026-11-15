@@ -3002,7 +3002,15 @@
       document.getElementById('hqRp').innerText = `${agencyProfile.research_points} RP`;
       
       const topFunds = document.getElementById('topAgencyFunds');
-      if (topFunds) topFunds.innerText = `$${(agencyProfile.funds_usd / 1000000).toFixed(1)}M`;
+      if (topFunds) {
+        const buildCost = (AppState.lastValidation && AppState.lastValidation.total_cost_usd) ? AppState.lastValidation.total_cost_usd : 0;
+        if (buildCost > 0) {
+          const costM = (buildCost / 1000000).toFixed(1);
+          topFunds.innerHTML = `$${(agencyProfile.funds_usd / 1000000).toFixed(1)}M <span style="font-size: 8px; color: var(--status-warning); font-weight: normal;" title="Committed build cost for active spacecraft design">(-$${costM}M BUILD)</span>`;
+        } else {
+          topFunds.innerText = `$${(agencyProfile.funds_usd / 1000000).toFixed(1)}M`;
+        }
+      }
       const topRep = document.getElementById('topAgencyRep');
       if (topRep) topRep.innerText = `${agencyProfile.reputation}★`;
       const topRp = document.getElementById('topAgencyRp');
@@ -4143,6 +4151,11 @@
       document.getElementById('cadValTotalCost').innerText = `$${(b.total_cost_usd / 1000000).toFixed(1)}M`;
       document.getElementById('cadValBudgetCap').innerText = `$${(b.budget_cap_usd / 1000000).toFixed(1)}M`;
       document.getElementById('cadBarBudget').style.width = `${Math.min(100, (b.total_cost_usd / b.budget_cap_usd) * 100)}%`;
+      const topFunds = document.getElementById('topAgencyFunds');
+      if (topFunds && agencyProfile) {
+        const costM = (b.total_cost_usd / 1000000).toFixed(1);
+        topFunds.innerHTML = `$${(agencyProfile.funds_usd / 1000000).toFixed(1)}M <span style="font-size: 8px; color: var(--status-warning); font-weight: normal;" title="Committed build cost for active spacecraft design">(-$${costM}M BUILD)</span>`;
+      }
 
       // Subsystem masses
       // Subsystem masses breakdown (Safely derived)
