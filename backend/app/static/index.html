@@ -1574,6 +1574,12 @@
               <button onclick="setCadRenderMode('XRAY')" id="cadBtnXray" class="btn-tech">
                 X-RAY GHOST
               </button>
+              <button onclick="setCadRenderMode('THERMAL')" id="cadBtnThermal" class="btn-tech" style="color: #f97316;">
+                THERMAL FLUX HEATMAP
+              </button>
+              <button onclick="setCadRenderMode('FEA_STRESS')" id="cadBtnFea" class="btn-tech" style="color: #ec4899;">
+                FEA LAUNCH STRESS
+              </button>
               <button onclick="toggleCadAutoRotate()" id="cadBtnAutoRotate" class="btn-tech" style="color: var(--status-nominal);">
                 TURNTABLE: OFF
               </button>
@@ -2290,6 +2296,12 @@
             </div>
           </div>
 
+          <!-- In-Flight Emergency Simulator Trigger -->
+          <div style="margin-bottom: 8px;">
+            <button onclick="triggerEmergencyIncident()" class="btn-tech" style="width: 100%; padding: 6px; font-weight: 700; color: #fca5a5; background: rgba(220, 38, 38, 0.2); border-color: #ef4444; font-size: 8.5px;">
+              ⚠ SIMULATE CONTINGENCY ANOMALY
+            </button>
+          </div>
           <!-- Command Uplink -->
           <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 6px; padding-top: 6px;" class="border-t-tech">
             COMMAND UPLINK BUFFER (CCSDS)
@@ -4720,9 +4732,48 @@
       const bW = document.getElementById('cadBtnWire');
       const bS = document.getElementById('cadBtnSolid');
       const bX = document.getElementById('cadBtnXray');
+      const bT = document.getElementById('cadBtnThermal');
+      const bF = document.getElementById('cadBtnFea');
       if (bW) bW.className = (mode === 'WIREFRAME' ? 'btn-tech active' : 'btn-tech');
       if (bS) bS.className = (mode === 'SOLID' ? 'btn-tech active' : 'btn-tech');
       if (bX) bX.className = (mode === 'XRAY' ? 'btn-tech active' : 'btn-tech');
+      if (bT) bT.className = (mode === 'THERMAL' ? 'btn-tech active' : 'btn-tech');
+      if (bF) bF.className = (mode === 'FEA_STRESS' ? 'btn-tech active' : 'btn-tech');
+
+      if (cadMeshes.solid) {
+        cadMeshes.solid.forEach((m, idx) => {
+          m.visible = (mode === 'SOLID' || mode === 'XRAY' || mode === 'THERMAL' || mode === 'FEA_STRESS');
+          if (mode === 'XRAY') {
+            m.material.transparent = true;
+            m.material.opacity = 0.22;
+            m.material.depthWrite = false;
+          } else if (mode === 'THERMAL') {
+            m.material.transparent = false;
+            m.material.opacity = 1.0;
+            m.material.depthWrite = true;
+            // Solar heat flux gradient: Sun-side vs Shade
+            const heatColors = [0xef4444, 0xf97316, 0xfbbf24, 0x0284c7, 0x1e3a8a];
+            if (m.material.color) m.material.color.setHex(heatColors[idx % heatColors.length]);
+          } else if (mode === 'FEA_STRESS') {
+            m.material.transparent = false;
+            m.material.opacity = 1.0;
+            m.material.depthWrite = true;
+            // FEA stress: high load at base adapter, lower at payload
+            const stressColors = [0xdc2626, 0xf59e0b, 0x10b981, 0x06b6d4, 0x3b82f6];
+            if (m.material.color) m.material.color.setHex(stressColors[idx % stressColors.length]);
+          } else {
+            m.material.transparent = false;
+            m.material.opacity = 1.0;
+            m.material.depthWrite = true;
+            if (m.material.color) m.material.color.setHex(0xc0c8d0); // Metallic
+          }
+        });
+      }
+      if (cadMeshes.wire) {
+        cadMeshes.wire.forEach(m => {
+          m.visible = (mode === 'WIREFRAME' || mode === 'XRAY' || mode === 'THERMAL' || mode === 'FEA_STRESS');
+        });
+      }
 
       if (cadMeshes.solid) {
         cadMeshes.solid.forEach(m => {
@@ -7272,6 +7323,84 @@
       onResizeOrbit();
       onResizeSim();
     });
-  </script>
+  
+    // In-Flight Emergency Simulator Logic
+    let emergTimer = null;
+    let emergSeconds = 15;
+
+    function triggerEmergencyIncident() {
+      const modal = document.getElementById('modalEmergencyIncident');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      emergSeconds = 15;
+      document.getElementById('emergCountdown').innerText = `${emergSeconds}s`;
+
+      playBeep(880, 0.25, 'sawtooth');
+      setTimeout(() => playBeep(440, 0.25, 'sawtooth'), 300);
+
+      if (emergTimer) clearInterval(emergTimer);
+      emergTimer = setInterval(() => {
+        emergSeconds--;
+        const el = document.getElementById('emergCountdown');
+        if (el) el.innerText = `${emergSeconds}s`;
+        if (emergSeconds <= 0) {
+          clearInterval(emergTimer);
+          resolveEmergencyChoice(0); // Timed out
+        }
+      }, 1000);
+    }
+
+    function resolveEmergencyChoice(choiceIndex) {
+      if (emergTimer) clearInterval(emergTimer);
+      const modal = document.getElementById('modalEmergencyIncident');
+      if (modal) modal.style.display = 'none';
+
+      if (choiceIndex === 1 || choiceIndex === 2) {
+        playBeep(880, 0.15, 'triangle');
+        setTimeout(() => playBeep(1174, 0.35, 'triangle'), 150);
+        showMultiplayerToast("CONTINGENCY RESOLVED", "RCS Desaturation executed successfully. Attitude control nominal! (+50 Reputation)", "nominal");
+        if (AppState.agencyProfile) {
+          AppState.agencyProfile.reputation = Math.min(100, (AppState.agencyProfile.reputation || 75) + 5);
+        }
+      } else if (choiceIndex === 3) {
+        showMultiplayerToast("SAFE MODE ACTIVE", "Spacecraft entered sun-pointing hold. Telemetry stabilized.", "carrier");
+      } else {
+        showMultiplayerToast("ANOMALY PENALTY", "Contingency timer expired! Gyroscope tripped into safe recovery.", "warning");
+      }
+    }
+
+</script>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: IN-FLIGHT EMERGENCY INCIDENT & RECOVERY CONTINGENCY           -->
+  <!-- ===================================================================== -->
+  <div id="modalEmergencyIncident" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div style="max-width: 580px; width: 100%; background: #0a0e17; border: 2px solid #ef4444; padding: 20px; box-shadow: 0 0 35px rgba(239, 68, 68, 0.4); font-family: var(--font-mono);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ef4444; padding-bottom: 8px; margin-bottom: 12px;">
+        <div>
+          <span style="font-size: 9px; color: #ef4444; font-weight: 700; letter-spacing: 0.15em;">CRITICAL FLIGHT ANOMALY // C&W EMERGENCY</span>
+          <h2 id="emergTitle" style="font-size: 16px; color: #fff; margin-top: 2px;">REACTION WHEEL DESATURATION ANOMALY</h2>
+        </div>
+        <div id="emergCountdown" style="font-size: 24px; font-weight: 900; color: #ef4444; border: 1px solid #ef4444; padding: 2px 8px; background: rgba(239,68,68,0.1);">15s</div>
+      </div>
+
+      <div id="emergDesc" style="font-size: 10.5px; color: #fed7aa; line-height: 1.5; margin-bottom: 14px; background: rgba(239,68,68,0.06); padding: 10px; border-left: 3px solid #ef4444;">
+        Angular momentum saturation detected on RW-2 (6000 RPM). Attitude authority degrading! Execute hydrazine RCS momentum dump or switch to star tracker gyro drift hold.
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button onclick="resolveEmergencyChoice(1)" id="emergChoice1" class="btn-tech btn-tech-primary" style="padding: 10px; text-align: left; font-size: 10px; background: #dc2626; border-color: #ef4444;">
+          1. EXECUTE HYDRAZINE RCS PULSE DUMP (-8 kg Propellant, Restores Wheel Speed)
+        </button>
+        <button onclick="resolveEmergencyChoice(2)" id="emergChoice2" class="btn-tech" style="padding: 10px; text-align: left; font-size: 10px;">
+          2. DEPLOY MAGNETIC TORQUER BAR FIELD (Low Delta-V, Slower Desaturation)
+        </button>
+        <button onclick="resolveEmergencyChoice(3)" id="emergChoice3" class="btn-tech" style="padding: 10px; text-align: left; font-size: 10px;">
+          3. ENTER SUN-POINTING SAFE MODE (Preserve Power, Suspend Science Operations)
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
