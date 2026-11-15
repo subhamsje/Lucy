@@ -612,7 +612,227 @@
         const startDataCap = state.role === 'scientist' ? 300 : 250;
         const hullCostB = (0.7 + t * 1.6).toFixed(2);
         const supplyCostB = (3.0 - parseFloat(hullCostB)).toFixed(2);
-        return { startHull, startO2, startPower, startDataCap, hullCostB, supplyCostB };
+        
+      // =======================================================================
+      // DRAGONFLY OCTOCOPTER AERIAL SIMULATOR LOGIC
+      // =======================================================================
+      const DragonflySim = {
+        canvas: null,
+        ctx: null,
+        animId: null,
+        alt: 12.5, // meters
+        speed: 4.2, // m/s
+        throttle: 60,
+        pitch: 0,
+        battery: 98,
+        running: false,
+
+        open() {
+          const m = document.getElementById('modal-dragonfly-drone');
+          if (m) m.classList.remove('hidden');
+          AudioFX.click();
+          this.init();
+          this.running = true;
+          if (this.animId) cancelAnimationFrame(this.animId);
+          this.loop();
+        },
+        close() {
+          const m = document.getElementById('modal-dragonfly-drone');
+          if (m) m.classList.add('hidden');
+          this.running = false;
+          if (this.animId) cancelAnimationFrame(this.animId);
+        },
+        init() {
+          this.canvas = document.getElementById('dragonfly-canvas');
+          if (!this.canvas) return;
+          this.ctx = this.canvas.getContext('2d');
+          const rect = this.canvas.parentElement.getBoundingClientRect();
+          this.canvas.width = rect.width;
+          this.canvas.height = rect.height;
+        },
+        loop() {
+          if (!DragonflySim.running) return;
+          DragonflySim.update();
+          DragonflySim.render();
+          DragonflySim.animId = requestAnimationFrame(() => DragonflySim.loop());
+        },
+        update() {
+          // In Titan's 4x dense atmosphere & 0.14g, lift is super responsive!
+          const targetAlt = (this.throttle / 100) * 80;
+          this.alt += (targetAlt - this.alt) * 0.04;
+          this.speed = (this.pitch / 30) * 12;
+          this.battery = Math.max(10, this.battery - 0.015);
+
+          const altEl = document.getElementById('df-alt-text');
+          if (altEl) altEl.innerText = `${this.alt.toFixed(1)} m`;
+          const spdEl = document.getElementById('df-spd-text');
+          if (spdEl) spdEl.innerText = `${Math.abs(this.speed).toFixed(1)} m/s`;
+          const battEl = document.getElementById('df-batt-text');
+          if (battEl) battEl.innerText = `${Math.round(this.battery)}%`;
+          const battBar = document.getElementById('df-batt-bar');
+          if (battBar) battBar.style.width = `${this.battery}%`;
+        },
+        render() {
+          if (!this.ctx || !this.canvas) return;
+          const w = this.canvas.width;
+          const h = this.canvas.height;
+          const ctx = this.ctx;
+
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, w, h);
+
+          // Orange-amber hazy atmospheric fog
+          const gradSky = ctx.createLinearGradient(0, 0, 0, h);
+          gradSky.addColorStop(0, '#451a03');
+          gradSky.addColorStop(0.6, '#1e1b18');
+          gradSky.addColorStop(1, '#070504');
+          ctx.fillStyle = gradSky;
+          ctx.fillRect(0, 0, w, h);
+
+          // Rolling hydrocarbon sand dunes & methane river below
+          const groundY = h * 0.72;
+          ctx.fillStyle = '#1c1917';
+          ctx.beginPath();
+          ctx.moveTo(0, groundY);
+          ctx.bezierCurveTo(w * 0.3, groundY - 20, w * 0.6, groundY + 25, w, groundY);
+          ctx.lineTo(w, h);
+          ctx.lineTo(0, h);
+          ctx.closePath();
+          ctx.fill();
+
+          // Liquid methane river reflection
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(w * 0.5, groundY + 30, w * 0.45, 18, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Dragonfly Drone Sprite in air
+          const droneY = groundY - (this.alt / 80) * (groundY * 0.7) - 20;
+          const droneX = w * 0.5;
+
+          ctx.save();
+          ctx.translate(droneX, droneY);
+          ctx.rotate((this.pitch * Math.PI) / 180);
+
+          // Drone body
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(-14, -6, 28, 12);
+
+          // Spinning rotors (top and bottom dual quads)
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-24, -12);
+          ctx.lineTo(24, -12);
+          ctx.moveTo(-24, 12);
+          ctx.lineTo(24, 12);
+          ctx.stroke();
+
+          // Camera sensor lens
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(8, 0, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      };
+
+      // =======================================================================
+      // KRAKEN MARE 360° ACOUSTIC SONAR SUBMERSIBLE LOGIC
+      // =======================================================================
+      const CryoSubSonar = {
+        canvas: null,
+        ctx: null,
+        animId: null,
+        depth: 42,
+        sweepAngle: 0,
+        running: false,
+
+        open() {
+          const m = document.getElementById('modal-cryosub-sonar');
+          if (m) m.classList.remove('hidden');
+          AudioFX.click();
+          this.init();
+          this.running = true;
+          if (this.animId) cancelAnimationFrame(this.animId);
+          this.loop();
+        },
+        close() {
+          const m = document.getElementById('modal-cryosub-sonar');
+          if (m) m.classList.add('hidden');
+          this.running = false;
+          if (this.animId) cancelAnimationFrame(this.animId);
+        },
+        init() {
+          this.canvas = document.getElementById('cryosub-sonar-canvas');
+          if (!this.canvas) return;
+          this.ctx = this.canvas.getContext('2d');
+          const rect = this.canvas.parentElement.getBoundingClientRect();
+          this.canvas.width = rect.width;
+          this.canvas.height = rect.height;
+        },
+        loop() {
+          if (!CryoSubSonar.running) return;
+          CryoSubSonar.update();
+          CryoSubSonar.render();
+          CryoSubSonar.animId = requestAnimationFrame(() => CryoSubSonar.loop());
+        },
+        update() {
+          this.sweepAngle = (this.sweepAngle + 0.035) % (Math.PI * 2);
+          const depthEl = document.getElementById('sonar-depth-text');
+          if (depthEl) depthEl.innerText = `${this.depth.toFixed(1)} m`;
+          const ballastEl = document.getElementById('sonar-ballast-text');
+          if (ballastEl) ballastEl.innerText = `-${Math.round(this.depth)} m`;
+        },
+        render() {
+          if (!this.ctx || !this.canvas) return;
+          const w = this.canvas.width;
+          const h = this.canvas.height;
+          const ctx = this.ctx;
+
+          ctx.fillStyle = 'rgba(2, 6, 23, 0.18)';
+          ctx.fillRect(0, 0, w, h);
+
+          const cx = w * 0.5;
+          const cy = h * 0.5;
+          const r = Math.min(w, h) * 0.42;
+
+          // Sonar Range Rings
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+          ctx.lineWidth = 1;
+          for (let step = 1; step <= 3; step++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, (r / 3) * step, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // Rotating Acoustic Sonar Beam
+          ctx.strokeStyle = '#60a5fa';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(this.sweepAngle) * r, cy + Math.sin(this.sweepAngle) * r);
+          ctx.stroke();
+
+          // Sonar contacts (seabed organic sediment & hydrocarbon bubbles)
+          ctx.fillStyle = '#93c5fd';
+          const contacts = [
+            { a: 0.8, d: r * 0.5 },
+            { a: 2.4, d: r * 0.75 },
+            { a: 4.1, d: r * 0.35 }
+          ];
+          for (const c of contacts) {
+            const px = cx + Math.cos(c.a) * c.d;
+            const py = cy + Math.sin(c.a) * c.d;
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      };
+
+      return { startHull, startO2, startPower, startDataCap, hullCostB, supplyCostB };
       }
 
       // =======================================================================
@@ -1619,6 +1839,14 @@
                 class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer ${state.inventory.drillUsesLeft > 0 ? 'bg-slate-900 border border-purple-500/50 hover:border-purple-400 text-purple-200' : 'bg-slate-950/60 border border-slate-800 text-slate-500 opacity-60'}">
                 <span>🔬 [4] Cryo-Drill (${state.inventory.drillUsesLeft} left)</span>
               </button>
+              <button onclick="TitanMissionModule.deployDragonfly()"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-cyan-400/60 hover:border-cyan-300 text-cyan-200 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+                <span>🚁 [5] Dragonfly Drone</span>
+              </button>
+              <button onclick="TitanMissionModule.deployCryoSub()"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-blue-400/60 hover:border-blue-300 text-blue-200 cursor-pointer shadow-[0_0_10px_rgba(96,165,250,0.2)]">
+                <span>🌊 [6] Kraken CryoSub</span>
+              </button>
               <div class="border-l border-slate-700 pl-2 text-[10px] text-slate-300 flex items-center gap-1">
                 <span>CANISTERS:</span>
                 <span class="text-white font-bold">${state.inventory.samples.length}/4</span>
@@ -1777,6 +2005,49 @@
         useItem: useInventoryItem,
         claimExpeditionReward,
         attemptAscent: attemptAscentLaunch,
+        deployDragonfly: () => DragonflySim.open(),
+        closeDragonfly: () => DragonflySim.close(),
+        setDroneThrottle: (val) => {
+          DragonflySim.throttle = parseFloat(val);
+          const txt = document.getElementById('df-rpm-text');
+          if (txt) txt.innerText = `${Math.round(val)}% (${val > 70 ? 'ASCENT' : (val > 45 ? 'HOVER' : 'DESCENT')})`;
+        },
+        setDronePitch: (val) => {
+          DragonflySim.pitch = parseFloat(val);
+          const txt = document.getElementById('df-pitch-text');
+          if (txt) txt.innerText = `${parseFloat(val).toFixed(1)}°`;
+        },
+        landDrone: () => {
+          AudioFX.click();
+          DragonflySim.close();
+          state.scienceScore += 40;
+          state.missionLogs.push("Dragonfly aerial drone executed safe touchdown and returned to lander.");
+          renderHUD();
+        },
+        snapshotAerialTarget: () => {
+          AudioFX.click();
+          state.scienceScore += 80;
+          state.missionLogs.push("Dragonfly captured 360° aerial multispectral survey of Titan dunes & rivers.");
+          AudioFX.fanfare();
+          DragonflySim.close();
+          renderHUD();
+        },
+        deployCryoSub: () => CryoSubSonar.open(),
+        closeCryoSub: () => CryoSubSonar.close(),
+        setSubDepth: (val) => {
+          CryoSubSonar.depth = parseFloat(val);
+        },
+        sampleHydrocarbonSludge: () => {
+          AudioFX.click();
+          state.scienceScore += 100;
+          if (state.inventory.samples.length < 4) {
+            state.inventory.samples.push("Kraken Mare Prebiotic Hydrocarbon Clathrate Core");
+          }
+          state.missionLogs.push("CryoSub extracted pristine -179°C liquid methane seabed organic sludge.");
+          AudioFX.fanfare();
+          CryoSubSonar.close();
+          renderHUD();
+        },
         toggleAdvisor: () => { AudioFX.click(); state.advisorOpen = !state.advisorOpen; renderHUD(); },
         quickAsk: (q) => askHermes(q),
         submitAsk: (e) => {
@@ -1795,5 +2066,138 @@
       window.TitanMissionModule.init({ containerId: 'titan-game-root' });
     });
   </script>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: DRAGONFLY OCTOCOPTER AERIAL ATMOSPHERIC FLIGHT SIMULATOR         -->
+  <!-- ======================================================================= -->
+  <div id="modal-dragonfly-drone" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6">
+    <div class="jpl-cyan rounded-3xl max-w-4xl w-full p-5 sm:p-6 space-y-4 border border-cyan-400/50 shadow-[0_0_40px_rgba(56,189,248,0.25)] flex flex-col">
+      <div class="flex items-center justify-between border-b border-cyan-500/30 pb-3">
+        <div>
+          <div class="font-mono text-xs text-cyan-400 font-bold">TITAN RELOCATABLE ROTORCRAFT-LANDER // DENSE ATMOSPHERE DYNAMICS</div>
+          <h2 class="text-xl font-bold text-white mt-0.5">DRAGONFLY-1 AERIAL RECONNAISSANCE HOPPER</h2>
+        </div>
+        <button onclick="TitanMissionModule.closeDragonfly()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white font-mono text-xs cursor-pointer border border-slate-700">✕ CLOSE FLIGHT</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 2D Aerial Flight Physics Canvas -->
+        <div class="md:col-span-2 bg-slate-950 rounded-2xl border border-slate-800 relative h-72 sm:h-80 overflow-hidden">
+          <canvas id="dragonfly-canvas" class="w-full h-full block"></canvas>
+          <div class="absolute top-3 left-3 font-mono text-[10px] text-cyan-300 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-cyan-500/30">
+            ATMOSPHERE: 1.45 BAR (4x EARTH) // GRAVITY: 0.14g // LIFT EFFICIENCY: 38x
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 flex justify-between items-center font-mono text-xs bg-slate-950/90 p-2.5 rounded-xl border border-slate-800">
+            <div>ALT: <strong id="df-alt-text" class="text-cyan-400">12.5 m</strong> // HORIZ SPEED: <strong id="df-spd-text" class="text-white">4.2 m/s</strong></div>
+            <button onclick="TitanMissionModule.snapshotAerialTarget()" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_12px_rgba(56,189,248,0.4)]">
+              📷 MULTISPECTRAL SURVEY (+80 SP)
+            </button>
+          </div>
+        </div>
+
+        <!-- Drone Flight Controls & Telemetry -->
+        <div class="jpl-panel rounded-2xl p-4 flex flex-col justify-between space-y-4 font-mono text-xs">
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-slate-400">ROTOR POWER THROTTLE:</span>
+                <span id="df-rpm-text" class="text-amber-400 font-bold">60% (HOVER)</span>
+              </div>
+              <input type="range" id="df-throttle-slider" min="0" max="100" value="60" oninput="TitanMissionModule.setDroneThrottle(this.value)" class="w-full accent-cyan-400 cursor-pointer">
+              <div class="flex justify-between text-[9px] text-slate-500 mt-0.5">
+                <span>0% CUTOFF</span>
+                <span>55% HOVER</span>
+                <span>100% ASCENT</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-slate-400">PITCH ATTITUDE TILT:</span>
+                <span id="df-pitch-text" class="text-cyan-400 font-bold">0.0°</span>
+              </div>
+              <input type="range" id="df-pitch-slider" min="-30" max="30" value="0" oninput="TitanMissionModule.setDronePitch(this.value)" class="w-full accent-amber-400 cursor-pointer">
+            </div>
+
+            <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 space-y-1.5 text-[10px]">
+              <div class="text-slate-400">DRONE BATTERY: <strong id="df-batt-text" class="text-emerald-400 font-bold">98%</strong></div>
+              <div class="w-full h-1.5 bg-slate-900 rounded-full"><div id="df-batt-bar" class="h-full bg-emerald-400 rounded-full" style="width: 98%"></div></div>
+              <div class="text-slate-400 mt-1">WIND SHEAR: <strong class="text-amber-300 font-bold">12 km/h (METHANE BREEZE)</strong></div>
+            </div>
+          </div>
+
+          <button onclick="TitanMissionModule.landDrone()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_15px_rgba(52,211,153,0.4)]">
+            🛬 RETRACT LANDING SKIDS & RETURN
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: KRAKEN MARE CRYOGENIC SUBMERSIBLE & 360° ACOUSTIC SONAR         -->
+  <!-- ======================================================================= -->
+  <div id="modal-cryosub-sonar" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6">
+    <div class="jpl-panel rounded-3xl max-w-4xl w-full p-5 sm:p-6 space-y-4 border border-blue-400/50 shadow-[0_0_40px_rgba(96,165,250,0.25)] flex flex-col">
+      <div class="flex items-center justify-between border-b border-blue-500/30 pb-3">
+        <div>
+          <div class="font-mono text-xs text-blue-400 font-bold">KRAKEN MARE LIQUID HYDROCARBON SEA // CRYO-SUBMERSIBLE EXPLORATION</div>
+          <h2 class="text-xl font-bold text-white mt-0.5">ACOUSTIC SONAR BATHYMETRY & SUBSURFACE PROBE</h2>
+        </div>
+        <button onclick="TitanMissionModule.closeCryoSub()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white font-mono text-xs cursor-pointer border border-slate-700">✕ SURFACE</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 360° Circular Sonar Radar Canvas -->
+        <div class="md:col-span-2 bg-slate-950 rounded-2xl border border-slate-800 relative h-72 sm:h-80 overflow-hidden flex items-center justify-center">
+          <canvas id="cryosub-sonar-canvas" class="w-full h-full block"></canvas>
+          <div class="absolute top-3 left-3 font-mono text-[10px] text-blue-300 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-blue-500/30">
+            MEDIUM: 70% LIQUID METHANE / 30% ETHANE // TEMP: 94 K (-179°C)
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 flex justify-between items-center font-mono text-xs bg-slate-950/90 p-2.5 rounded-xl border border-slate-800">
+            <div>SONAR DEPTH: <strong id="sonar-depth-text" class="text-blue-400">42.0 m</strong> // LIQUID DENSITY: <strong class="text-white">0.45 g/cm³</strong></div>
+            <button onclick="TitanMissionModule.sampleHydrocarbonSludge()" class="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_12px_rgba(96,165,250,0.4)]">
+              🧪 EXTRACT PREBIOTIC THOLIN CORE (+100 SP)
+            </button>
+          </div>
+        </div>
+
+        <!-- Submarine Dive Controls & Thermal RTG Balance -->
+        <div class="jpl-panel rounded-2xl p-4 flex flex-col justify-between space-y-4 font-mono text-xs">
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-slate-400">BALLAST BUOYANCY DEPTH:</span>
+                <span id="sonar-ballast-text" class="text-cyan-400 font-bold">-42 m</span>
+              </div>
+              <input type="range" id="sonar-depth-slider" min="0" max="150" value="42" oninput="TitanMissionModule.setSubDepth(this.value)" class="w-full accent-blue-400 cursor-pointer">
+              <div class="flex justify-between text-[9px] text-slate-500 mt-0.5">
+                <span>0 m (SURFACE)</span>
+                <span>75 m</span>
+                <span>150 m (SEABED)</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 space-y-1.5 text-[10px]">
+              <div class="flex justify-between text-slate-300">
+                <span>CRYOGENIC CHILL FLUX:</span>
+                <span class="text-rose-400 font-bold">-179.2 °C</span>
+              </div>
+              <div class="flex justify-between text-slate-300">
+                <span>RTG HEATING ELEMENT:</span>
+                <span class="text-emerald-400 font-bold">NOMINAL (+48 °C)</span>
+              </div>
+              <div class="text-slate-400 mt-1">SEABED FEATURES: <strong class="text-blue-300 font-bold">ETHANE SEDIMENT STRATA</strong></div>
+            </div>
+          </div>
+
+          <button onclick="TitanMissionModule.closeCryoSub()" class="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_15px_rgba(96,165,250,0.4)]">
+            ⬆ BLOW BALLAST & ASCEND TO SHORE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
