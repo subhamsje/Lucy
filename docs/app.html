@@ -9,7 +9,8 @@
         if (typeof url === 'string') {
           // If absolute /api/ path on GitHub Pages or file:
           if (url.startsWith('/api/v1/')) {
-            const relJson = './api/v1/' + url.replace('/api/v1/', '') + '.json';
+            const repoBase = window.location.pathname.includes('/Lucy') ? '/Lucy' : '';
+            const relJson = repoBase + '/api/v1/' + url.replace('/api/v1/', '') + '.json';
             try {
               const r = await origFetch(url, options);
               if (r.ok) return r;
