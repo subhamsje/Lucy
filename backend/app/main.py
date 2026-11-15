@@ -255,7 +255,9 @@ def execute_simulation(req: SimulationExecutionRequest):
             rp_award = 15
             rep_award = -2
 
-        agency["funds_usd"] = agency.get("funds_usd", 65000000.0) + payout
+        build_cost = float(budgets.get("total_cost_usd", 15000000.0))
+        net_delta = payout - build_cost
+        agency["funds_usd"] = max(1000000.0, float(agency.get("funds_usd", 65000000.0)) - build_cost + payout)
         agency["research_points"] = agency.get("research_points", 100) + rp_award
         agency["reputation"] = max(10, min(100, agency.get("reputation", 82) + rep_award))
         
