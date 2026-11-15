@@ -970,6 +970,7 @@
       <button class="dest-pill" onclick="selectSolarBody('EUROPA')">Europa</button>
       <button class="dest-pill" onclick="selectSolarBody('SATURN')">Sol-6 Saturn</button>
       <button class="dest-pill" onclick="selectSolarBody('TITAN')">Titan</button>
+      <button class="dest-pill" onclick="openJupiterSlingshotModal()" style="border-color: #f59e0b; color: #fbbf24; font-weight: 700;">⚡ JUPITER GRAVITY ASSIST SIMULATOR</button>
     </div>
 
     <!-- Solar 3D & Inspection Stage -->
@@ -1169,6 +1170,33 @@
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-dark); padding-bottom: 4px;">
               <span style="color: var(--text-dim);">PROPULSION STAGE:</span>
               <strong style="color: var(--accent-amber);" id="telemetryStage">STAGE 1 PRIMED</strong>
+            </div>
+          </div>
+
+          <!-- Manual Pilot Controls -->
+          <div style="background: var(--bg-inset); border: 1px solid var(--border-color); padding: 8px 12px; margin-top: 10px; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-family: var(--font-mono); font-size: 9.5px; color: var(--accent-blue); font-weight: 700;">MANUAL GRAVITY TURN CONTROL:</span>
+              <button onclick="toggleManualLaunchControl()" id="btnToggleManualLaunch" class="btn-portal" style="font-size: 8.5px; padding: 2px 8px; border-color: var(--accent-blue);">PILOT: OFF</button>
+            </div>
+            <div id="manualLaunchControls" style="display: none; flex-direction: column; gap: 6px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim); margin-bottom: 2px;">
+                  <span>PITCH AZIMUTH (GRAVITY TURN):</span>
+                  <span id="manualPitchVal" style="color: var(--text-bright);">0.0° (VERTICAL)</span>
+                </div>
+                <input type="range" id="manualPitchSlider" min="0" max="75" value="0" oninput="setManualPitch(this.value)" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim); margin-bottom: 2px;">
+                  <span>ENGINE THROTTLE:</span>
+                  <span id="manualThrottleVal" style="color: var(--accent-amber);">100%</span>
+                </div>
+                <input type="range" id="manualThrottleSlider" min="50" max="100" value="100" oninput="setManualThrottle(this.value)" style="width: 100%; accent-color: #f59e0b; cursor: pointer;">
+              </div>
+            </div>
+            <div id="maxQWarningBanner" style="display: none; font-family: var(--font-mono); font-size: 8px; color: #ef4444; margin-top: 4px; font-weight: 700;">
+              ⚠ AERODYNAMIC SHEAR HIGH (MAX-Q PEAK): Reduce pitch rate!
             </div>
           </div>
         </div>
@@ -2578,6 +2606,214 @@
       initTelemetryStripChart();
       fetchAgencyTelemetry();
     });
-  </script>
+  
+    // Manual Launch Pilot Controls & Jupiter Slingshot
+    let manualLaunchActive = false;
+    let manualPitch = 0;
+    let manualThrottle = 100;
+
+    function toggleManualLaunchControl() {
+      manualLaunchActive = !manualLaunchActive;
+      const btn = document.getElementById('btnToggleManualLaunch');
+      const pane = document.getElementById('manualLaunchControls');
+      if (btn) {
+        btn.innerText = manualLaunchActive ? 'PILOT: ACTIVE' : 'PILOT: OFF';
+        btn.style.color = manualLaunchActive ? 'var(--nominal-green)' : 'var(--accent-blue)';
+        btn.style.borderColor = manualLaunchActive ? 'var(--nominal-green)' : 'var(--accent-blue)';
+      }
+      if (pane) {
+        pane.style.display = manualLaunchActive ? 'flex' : 'none';
+      }
+    }
+
+    function setManualPitch(val) {
+      manualPitch = parseFloat(val);
+      const txt = document.getElementById('manualPitchVal');
+      if (txt) txt.innerText = `${manualPitch.toFixed(1)}° (${manualPitch > 60 ? 'ORBIT INSERTION' : (manualPitch > 20 ? 'GRAVITY TURN' : 'VERTICAL ASCENT')})`;
+
+      // Dynamic pressure safety check
+      const warn = document.getElementById('maxQWarningBanner');
+      if (warn && manualLaunchActive) {
+        warn.style.display = (manualPitch > 25 && launchRocketY > 60 && launchRocketY < 180) ? 'block' : 'none';
+      }
+    }
+
+    function setManualThrottle(val) {
+      manualThrottle = parseFloat(val);
+      const txt = document.getElementById('manualThrottleVal');
+      if (txt) txt.innerText = `${Math.round(manualThrottle)}%`;
+    }
+
+    // Jupiter Slingshot Simulator Logic
+    let slingshotCanvas = null;
+    let slingshotCtx = null;
+    let slingshotAnimId = null;
+    let slingshotRp = 2.4;
+
+    function openJupiterSlingshotModal() {
+      const modal = document.getElementById('modalJupiterSlingshot');
+      if (modal) modal.style.display = 'flex';
+      initSlingshotCanvas();
+    }
+
+    function closeJupiterSlingshotModal() {
+      const modal = document.getElementById('modalJupiterSlingshot');
+      if (modal) modal.style.display = 'none';
+      if (slingshotAnimId) cancelAnimationFrame(slingshotAnimId);
+    }
+
+    function initSlingshotCanvas() {
+      slingshotCanvas = document.getElementById('slingshotCanvas');
+      if (!slingshotCanvas) return;
+      slingshotCtx = slingshotCanvas.getContext('2d');
+      const rect = slingshotCanvas.parentElement.getBoundingClientRect();
+      slingshotCanvas.width = rect.width;
+      slingshotCanvas.height = rect.height;
+      updateSlingshotSim();
+    }
+
+    function updateSlingshotSim() {
+      const slider = document.getElementById('slingshotRpSlider');
+      if (slider) slingshotRp = parseFloat(slider.value);
+      const text = document.getElementById('slingshotRpText');
+      if (text) text.innerText = `${slingshotRp.toFixed(2)} R_J (${Math.round(slingshotRp * 71492).toLocaleString()} km)`;
+
+      // Slingshot deflection angle delta = 2 * arcsin(1 / (1 + (rp * v_inf^2 / mu)))
+      const muJ = 126686534; // km^3/s^2
+      const rJ = 71492;
+      const vInf = 13.80; // km/s
+      const r_peri = slingshotRp * rJ;
+      const ecc = 1 + (r_peri * Math.pow(vInf, 2)) / muJ;
+      const deltaRad = 2 * Math.asin(1 / ecc);
+      const deltaDeg = (deltaRad * 180) / Math.PI;
+
+      // Delta-v boost in heliocentric frame: deltaV = 2 * v_inf * sin(delta / 2)
+      const dvGain = 2 * vInf * Math.sin(deltaRad / 2);
+      const outbound = vInf + dvGain;
+
+      const dvEl = document.getElementById('slingshotDvGain');
+      if (dvEl) dvEl.innerText = dvGain.toFixed(2);
+      const outEl = document.getElementById('slingshotOutboundVel');
+      if (outEl) outEl.innerText = outbound.toFixed(2);
+
+      renderSlingshotCanvas(deltaRad);
+    }
+
+    function renderSlingshotCanvas(deltaRad) {
+      if (!slingshotCtx || !slingshotCanvas) return;
+      const w = slingshotCanvas.width;
+      const h = slingshotCanvas.height;
+      const ctx = slingshotCtx;
+
+      ctx.fillStyle = '#06080C';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w * 0.45;
+      const cy = h * 0.50;
+      const jupiterR = 36;
+
+      // Jupiter bands
+      const gradJ = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, jupiterR);
+      gradJ.addColorStop(0, '#fde68a');
+      gradJ.addColorStop(0.5, '#d97706');
+      gradJ.addColorStop(1, '#78350f');
+      ctx.fillStyle = gradJ;
+      ctx.beginPath();
+      ctx.arc(cx, cy, jupiterR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Atmospheric glow
+      ctx.strokeStyle = 'rgba(217, 119, 6, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Great Red Spot
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.ellipse(cx + 12, cy + 10, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inbound and Outbound Hyperbolic Slingshot Trajectory
+      const periDist = jupiterR + (slingshotRp - 1.0) * 22;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, cy + periDist * 1.5);
+      ctx.quadraticCurveTo(cx - 20, cy + periDist, cx + periDist * 0.5, cy);
+      ctx.quadraticCurveTo(cx + periDist, cy - periDist * 0.8, w, cy - periDist * 1.8);
+      ctx.stroke();
+
+      // Perijove marker
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(cx, cy + periDist, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '9px monospace';
+      ctx.fillText(`PERIJOVE (${slingshotRp.toFixed(1)} R_J)`, cx + 8, cy + periDist + 3);
+    }
+
+</script>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: JUPITER GRAVITY ASSIST SLINGSHOT SIMULATOR                         -->
+  <!-- ========================================================================= -->
+  <div id="modalJupiterSlingshot" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 16px;">
+    <div style="max-width: 780px; width: 100%; background: #0B0E13; border: 1px solid #f59e0b; padding: 20px; box-shadow: 0 0 40px rgba(245, 158, 11, 0.25);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dark); padding-bottom: 10px; margin-bottom: 14px;">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: #f59e0b; font-weight: 700; letter-spacing: 0.1em;">ORBITAL MECHANICS // THREE-BODY PERIJOVE PASS</span>
+          <h3 style="font-size: 18px; color: #fff; margin-top: 2px;">Jupiter Planetary Gravity Assist Slingshot</h3>
+        </div>
+        <button onclick="closeJupiterSlingshotModal()" class="btn-portal" style="padding: 4px 10px; font-size: 11px;">✕ CLOSE</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 280px; gap: 16px;">
+        <div style="background: #000; border: 1px solid var(--border-dark); height: 320px; position: relative;">
+          <canvas id="slingshotCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+          <div style="position: absolute; top: 8px; left: 10px; font-family: var(--font-mono); font-size: 9px; color: #f59e0b; background: rgba(0,0,0,0.7); padding: 3px 6px;">
+            M_J = 1.898 × 10²⁷ kg // R_J = 71,492 km // GM = 1.266 × 10⁸ km³/s²
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: space-between; font-family: var(--font-mono); font-size: 10px;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-dim);">PERIJOVE RADIUS (r_p):</span>
+                <strong id="slingshotRpText" style="color: #fff;">2.40 R_J (171,580 km)</strong>
+              </div>
+              <input type="range" id="slingshotRpSlider" min="1.2" max="6.0" step="0.1" value="2.4" oninput="updateSlingshotSim()" style="width: 100%; accent-color: #f59e0b; cursor: pointer;">
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-dim);">INBOUND ASYMPTOTIC VEL:</span>
+                <strong style="color: var(--accent-blue);">13.80 km/s</strong>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-inset); border: 1px solid var(--border-dark); padding: 10px; border-left: 3px solid #f59e0b;">
+              <div style="color: var(--text-dim); margin-bottom: 4px;">GRAVITY ASSIST RESULT:</div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--nominal-green); margin-bottom: 2px;">
+                BOOST Δv: +<span id="slingshotDvGain">14.28</span> km/s
+              </div>
+              <div style="font-size: 9px; color: var(--text-bright);">
+                HELIOCENTRIC OUTBOUND: <span id="slingshotOutboundVel">28.08</span> km/s
+              </div>
+              <div style="font-size: 8px; color: var(--text-dim); margin-top: 4px;">
+                DESTINATION: SATURN & KUIPER BELT DIRECT FLYBY
+              </div>
+            </div>
+          </div>
+
+          <a href="/app" class="btn-portal btn-portal-primary" style="width: 100%; justify-content: center; font-size: 10px;">
+            EXECUTE IN UNIVERSE WORKSTATION ▶
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
