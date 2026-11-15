@@ -1,0 +1,67 @@
+{
+  "rules_version": "1.0.0",
+  "compatibility_engine": {
+    "chassis_rules": {
+      "CUBESAT_12U": {
+        "max_payload_mass_kg": 24.0,
+        "max_power_dissipation_w": 80.0,
+        "allowed_tiers": ["BASIC"],
+        "max_components_per_category": 1,
+        "forbidden_components": ["INST-SAR-03", "EPS-SOL-03", "PROP-ION-03", "STR-ISO-03"]
+      },
+      "SMALLSAT_LEO": {
+        "max_payload_mass_kg": 280.0,
+        "max_power_dissipation_w": 450.0,
+        "allowed_tiers": ["BASIC", "INTERMEDIATE"],
+        "max_components_per_category": 2,
+        "forbidden_components": ["INST-SAR-03", "PROP-ION-03", "STR-ISO-03"]
+      },
+      "MEDIUM_BUS": {
+        "max_payload_mass_kg": 750.0,
+        "max_power_dissipation_w": 2500.0,
+        "allowed_tiers": ["BASIC", "INTERMEDIATE", "ADVANCED"],
+        "max_components_per_category": 3,
+        "forbidden_components": []
+      },
+      "HEAVY_PROBE": {
+        "max_payload_mass_kg": 2000.0,
+        "max_power_dissipation_w": 5000.0,
+        "allowed_tiers": ["BASIC", "INTERMEDIATE", "ADVANCED"],
+        "max_components_per_category": 4,
+        "forbidden_components": []
+      }
+    },
+    "voltage_bus_rules": {
+      "nominal_voltages_v": [12, 28, 50],
+      "voltage_step_down_allowed": true,
+      "voltage_mismatch_penalty": {
+        "efficiency_loss_pct": 12.0,
+        "dcdc_converter_mass_penalty_kg_per_100w": 0.85,
+        "dcdc_cost_usd": 45000
+      }
+    },
+    "pointing_budget_rules": {
+      "formula": "achieved_pointing_deg <= required_pointing_deg",
+      "violation_severity": "SCIENCE_DEGRADED",
+      "degradation_model": "science_yield_multiplier = max(0.0, 1.0 - (achieved_pointing_deg - required_pointing_deg) / required_pointing_deg)"
+    },
+    "thermal_rejection_rules": {
+      "formula": "tcs_heat_rejection_capacity_w >= total_electronic_dissipation_w * 1.15",
+      "violation_severity": "THERMAL_SHOCK_RISK",
+      "thermal_runaway_threshold_c": 55.0
+    },
+    "energy_balance_rules": {
+      "formula": "(P_solar_gen * T_sun) >= ((P_eclipse_load * T_eclipse) / battery_discharge_eff) * 1.20",
+      "violation_severity": "BROWNOUT_RISK",
+      "min_allowable_soc_pct": 20.0
+    },
+    "mass_margin_rules": {
+      "aiaa_s120_standard": {
+        "phase_a_concept_margin_pct": 20.0,
+        "phase_b_preliminary_margin_pct": 15.0,
+        "phase_c_critical_margin_pct": 10.0
+      },
+      "formula": "launch_vehicle_capacity_kg >= dry_mass_kg * (1 + margin_pct / 100) + propellant_mass_kg"
+    }
+  }
+}
