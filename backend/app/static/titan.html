@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <link rel="icon" type="image/png" href="/static/assets/khagol_icon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TITAN: LAST TRANSMISSION // NASA Space Apps Expedition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #070504;
+      color: #f8fafc;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+    }
+
+    /* Sleek Aerospace Glassmorphic HUD */
+    .jpl-panel {
+      background: rgba(11, 13, 19, 0.84);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.72), inset 0 0 20px rgba(245, 158, 11, 0.04);
+    }
+
+    .jpl-cyan {
+      background: rgba(9, 15, 24, 0.86);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.72), inset 0 0 20px rgba(56, 189, 248, 0.05);
+    }
+
+    /* Custom Range Slider for Pre-Launch Trade-Off */
+    input[type="range"].jpl-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #38bdf8 0%, #f59e0b 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].jpl-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #f59e0b;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.8);
+      cursor: pointer;
+    }
+
+    /* Crash Screen Shake */
+    @keyframes crash-shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      15% { transform: translate(-7px, 5px) rotate(-0.8deg); }
+      30% { transform: translate(7px, -4px) rotate(0.8deg); }
+      45% { transform: translate(-5px, -5px) rotate(-0.5deg); }
+      60% { transform: translate(6px, 4px) rotate(0.6deg); }
+      75% { transform: translate(-4px, 3px) rotate(-0.4deg); }
+    }
+    .shaking {
+      animation: crash-shake 0.16s infinite;
+    }
+
+    .thin-scroll::-webkit-scrollbar { width: 4px; }
+    .thin-scroll::-webkit-scrollbar-track { background: transparent; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 999px; }
+  </style>
+</head>
+<body>
+  <!-- Root Mount Container for Modular Merging -->
+  <div id="titan-game-root" class="relative w-screen h-screen overflow-hidden"></div>
+
+  <script>
+    /**
+     * =========================================================================
+     * TITAN: LAST TRANSMISSION — PLAYABLE SURFACE EVA & TRADE-OFF SIMULATOR
+     * =========================================================================
+     * Team Merge API:
+     *   window.TitanMissionModule.init({ containerId, onComplete, onReturnToHub })
+     *   window.TitanMissionModule.destroy()
+     */
+    window.TitanMissionModule = (function () {
+      'use strict';
+
+      // =======================================================================
+      // 1. WEB AUDIO API SYNTHESIZER (Atmospheric Titan Wind, Footsteps, HUD)
+      // =======================================================================
+      const AudioFX = {
+        ctx: null,
+        muted: false,
+        windStarted: false,
+        windGain: null,
+
+        ensure() {
+          if (this.muted) return null;
+          if (!this.ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) this.ctx = new AC();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+          if (this.ctx && !this.windStarted) {
+            this.startAmbientTitanWind();
+          }
+          return this.ctx;
+        },
+
+        startAmbientTitanWind() {
+          try {
+            if (!this.ctx || this.windStarted) return;
+            this.windStarted = true;
+            const len = this.ctx.sampleRate * 2;
+            const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            let last = 0;
+            for (let i = 0; i < len; i++) {
+              const w = Math.random() * 2 - 1;
+              data[i] = (last + 0.025 * w) / 1.025;
+              last = data[i];
+              data[i] *= 1.6;
+            }
+            const src = this.ctx.createBufferSource();
+            src.buffer = buf;
+            src.loop = true;
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 165;
+
+            const gain = this.ctx.createGain();
+            gain.gain.value = this.muted ? 0 : 0.045;
+            this.windGain = gain;
+
+            src.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+            src.start(0);
+          } catch (e) {}
+        },
+
+        toggleMute() {
+          this.muted = !this.muted;
+          if (!this.muted) this.ensure();
+          if (this.windGain && this.ctx) {
+            this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.045, this.ctx.currentTime, 0.08);
+          }
+          return !this.muted;
+        },
+
+        beep(freq, type = 'sine', dur = 0.08, vol = 0.06, endFreq = null) {
+          try {
+            const ctx = this.ensure();
+            if (!ctx || this.muted) return;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + dur);
+            g.gain.setValueAtTime(vol, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + dur);
+          } catch (e) {}
+        },
+
+        click() { this.beep(620, 'triangle', 0.07, 0.055, 880); },
+        radarPing() { this.beep(1080, 'sine', 0.16, 0.045, 740); },
+        alert() {
+          this.beep(240, 'sawtooth', 0.15, 0.07, 175);
+          setTimeout(() => this.beep(220, 'sawtooth', 0.18, 0.07, 160), 160);
+        },
+        footstep() {
+          // Soft low-gravity tholin crunch
+          this.beep(115 + Math.random() * 25, 'triangle', 0.055, 0.03, 55);
+        },
+        crashImpact() {
+          this.beep(90, 'sawtooth', 1.2, 0.14, 38);
+          this.beep(55, 'triangle', 1.4, 0.15, 28);
+        }
+      };
+
+      // =======================================================================
+      // 2. GAME CONFIGURATION & HIGH-STAKE PLANETARY DILEMMAS
+      // =======================================================================
+      let mergeConfig = {
+        containerId: 'titan-game-root',
+        onComplete: null,
+        onReturnToHub: null
+      };
+
+      const ROLES = {
+        engineer: {
+          id: 'engineer',
+          code: 'ENG',
+          title: 'Flight Systems Engineer',
+          perk: '+35% Hull Repair Efficiency • -25% EVA O₂ Burn',
+          repairMult: 1.35,
+          o2BurnMult: 0.75,
+          scienceMult: 0.85
+        },
+        scientist: {
+          id: 'scientist',
+          code: 'SCI',
+          title: 'Planetary Scientist',
+          perk: '+40% Science Yield • +50 GB Deep Analysis Buffer',
+          repairMult: 0.85,
+          o2BurnMult: 1.15,
+          scienceMult: 1.4
+        }
+      };
+
+      // 4 Physical Landmarks on Titan's Surface (World Coordinates in 1800x1150 map)
+      const LANDMARKS = [
+        {
+          id: 'lander',
+          code: 'SITE-01',
+          name: 'CRASHED LANDER HULL',
+          tag: 'STRUCTURAL // ASCENT VEHICLE',
+          x: 520,
+          y: 620,
+          radius: 95,
+          color: '#f59e0b',
+          dilemmas: [
+            {
+              title: 'Primary Aeroshell & Ascent Engine Breach',
+              telemetry: 'HULL INTEGRITY CRITICAL // RTG THERMAL LOOP EXPOSED',
+              choices: [
+                {
+                  id: 'overdrive_rtg',
+                  label: 'Overdrive RTG Arc-Welder to Seal Hull Fast',
+                  costText: '-28 kWh Power • -8% O₂ • +34% Hull',
+                  hullDelta: 34,
+                  o2Delta: -8,
+                  powerDelta: -28,
+                  scienceDelta: 0,
+                  dataDelta: 0,
+                  commsSet: null,
+                  log: 'RTG plasma-welded primary titanium struts. Power bus strained.'
+                },
+                {
+                  id: 'cannibalize_lab',
+                  label: 'Strip Spectrometer Casing to Patch Struts',
+                  costText: '+28% Hull • -6% O₂ • -20% Max Science Yield',
+                  hullDelta: 28,
+                  o2Delta: -6,
+                  powerDelta: -5,
+                  scienceDelta: -35,
+                  dataDelta: 0,
+                  commsSet: null,
+                  sciencePenalty: 0.2,
+                  log: 'Salvaged beryllium spectrometer housing for hull plating. Power preserved.'
+                }
+              ]
+            },
+            {
+              title: 'Ascent Gimbal & Cryo-Propellant Valve Alignment',
+              telemetry: 'THRUST VECTOR DRIFT +4.2° // PRE-LAUNCH CHECK',
+              choices: [
+                {
+                  id: 'manual_eva_torque',
+                  label: 'Manual EVA Cryo-Torque Calibration',
+                  costText: '+26% Hull • -14% O₂ • -10 kWh Power',
+                  hullDelta: 26,
+                  o2Delta: -14,
+                  powerDelta: -10,
+                  scienceDelta: 15,
+                  dataDelta: 20,
+                  commsSet: null,
+                  log: 'Manually torqued ascent gimbal bearings in -179°C crosswind.'
+                },
+                {
+                  id: 'vent_reserve_o2',
+                  label: 'Purge Reserve Breathing O₂ to Pressurize Fuel Lines',
+                  costText: '+30% Hull • -22% O₂ • 0 kWh Power',
+                  hullDelta: 30,
+                  o2Delta: -22,
+                  powerDelta: 0,
+                  scienceDelta: 0,
+                  dataDelta: 0,
+                  commsSet: null,
+                  log: 'Used reserve O₂ pressure to clear frozen methane propellant valves.'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'comms',
+          code: 'SITE-02',
+          name: 'HIGH-GAIN COMMS RELAY',
+          tag: 'TELEMETRY // DSN UPLINK',
+          x: 920,
+          y: 350,
+          radius: 85,
+          color: '#38bdf8',
+          dilemmas: [
+            {
+              title: 'Severed Ka-Band Dish & Saturn Occultation Window',
+              telemetry: 'EARTH LINK: OFFLINE // DATA BUFFER UNTRANSMITTED',
+              choices: [
+                {
+                  id: 'boost_dish_power',
+                  label: 'Lock Dish & Transmit Burst Through Haze',
+                  costText: 'COMMS ONLINE • -30 kWh Power • -8% O₂ • +95 Science',
+                  hullDelta: 0,
+                  o2Delta: -8,
+                  powerDelta: -30,
+                  scienceDelta: 95,
+                  dataDelta: -60,
+                  commsSet: 'ONLINE',
+                  log: 'Ka-band burst pierced Titan haze. Earth DSN confirmed telemetry receipt.'
+                },
+                {
+                  id: 'salvage_dish_capacitors',
+                  label: 'Harvest Dish Capacitors for Lander Systems',
+                  costText: 'COMMS OFFLINE • +25 kWh Power • +12% Hull • -5% O₂',
+                  hullDelta: 12,
+                  o2Delta: -5,
+                  powerDelta: 25,
+                  scienceDelta: 0,
+                  dataDelta: 0,
+                  commsSet: 'OFFLINE',
+                  log: 'Stripped high-gain capacitors to boost lander power & hull avionics.'
+                }
+              ]
+            },
+            {
+              title: 'Huygens-Heritage Atmospheric Doppler Relay',
+              telemetry: 'STRATOSPHERIC WIND SHEAR TELEMETRY READY',
+              choices: [
+                {
+                  id: 'continuous_beacon',
+                  label: 'Run Continuous Doppler Wind Profile Beacon',
+                  costText: '-22 kWh Power • -9% O₂ • +85 Science • +45 GB',
+                  hullDelta: 0,
+                  o2Delta: -9,
+                  powerDelta: -22,
+                  scienceDelta: 85,
+                  dataDelta: 45,
+                  commsSet: 'ONLINE',
+                  log: 'Captured multi-altitude super-rotation wind telemetry for future landers.'
+                },
+                {
+                  id: 'low_power_standby',
+                  label: 'Record Local SSD Log & Hibernate Transponder',
+                  costText: '+10 kWh Power • -5% O₂ • +35 Science • +30 GB',
+                  hullDelta: 0,
+                  o2Delta: -5,
+                  powerDelta: 10,
+                  scienceDelta: 35,
+                  dataDelta: 30,
+                  commsSet: null,
+                  log: 'Stored local atmospheric log on SSD and hibernated dish heaters.'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'lake',
+          code: 'SITE-03',
+          name: 'KRAKEN MARE SHORELINE',
+          tag: 'HYDROCARBON SEA // 93.7 K',
+          x: 1360,
+          y: 740,
+          radius: 105,
+          color: '#22d3ee',
+          dilemmas: [
+            {
+              title: 'Liquid Methane-Ethane Surf & Organic Tholin Sludge',
+              telemetry: 'BATHYMETRY ANOMALY 18M OFFSHORE // PREBIOTIC POLYMERS',
+              choices: [
+                {
+                  id: 'wade_benthic',
+                  label: 'Wade Into Liquid Methane (-179°C) for Benthic Core',
+                  costText: '+145 Science • +70 GB • -22% O₂ • -14% Hull',
+                  hullDelta: -14,
+                  o2Delta: -22,
+                  powerDelta: -18,
+                  scienceDelta: 145,
+                  dataDelta: 70,
+                  commsSet: null,
+                  log: 'Submerged EVA boots into liquid methane. Extracted complex nitrile sludge!'
+                },
+                {
+                  id: 'skim_shoreline',
+                  label: 'Skim Shoreline Foam Safely With Tethered Probe',
+                  costText: '+60 Science • +35 GB • -8% O₂ • -6 kWh Power',
+                  hullDelta: 0,
+                  o2Delta: -8,
+                  powerDelta: -6,
+                  scienceDelta: 60,
+                  dataDelta: 35,
+                  commsSet: null,
+                  log: 'Collected surface tholin film safely without thermal suit stress.'
+                }
+              ]
+            },
+            {
+              title: 'Tidal Hydrocarbon Bubble Plume (Nitrogen Exsolution)',
+              telemetry: 'RAPID N₂ OUTGASSING DETECTED // BUOYANCY HAZARD',
+              choices: [
+                {
+                  id: 'sample_gas_plume',
+                  label: 'Hold Position Inside Outgassing Plume for Mass Spec',
+                  costText: '+110 Science • +55 GB • -16% O₂ • -10% Hull',
+                  hullDelta: -10,
+                  o2Delta: -16,
+                  powerDelta: -15,
+                  scienceDelta: 110,
+                  dataDelta: 55,
+                  commsSet: null,
+                  log: 'Recorded rare nitrogen-methane phase overturn event at close range.'
+                },
+                {
+                  id: 'retreat_ridge',
+                  label: 'Retreat to Tholin Ridge & Optical Lidar Scan',
+                  costText: '+45 Science • +25 GB • -6% O₂ • -5 kWh Power',
+                  hullDelta: 0,
+                  o2Delta: -6,
+                  powerDelta: -5,
+                  scienceDelta: 45,
+                  dataDelta: 25,
+                  commsSet: null,
+                  log: 'Captured safe remote Lidar wave-height profile from high ground.'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'vent',
+          code: 'SITE-04',
+          name: 'CRYOVOLCANIC VENT',
+          tag: 'ASTROBIOLOGY // AMMONIA-WATER',
+          x: 1290,
+          y: 310,
+          radius: 90,
+          color: '#34d399',
+          dilemmas: [
+            {
+              title: 'Warm Subsurface Ammonia-Water Oasis (-32°C)',
+              telemetry: 'H₂ & C₂H₂ DEPLETION SIGNATURE // POTENTIAL METHANOGENS',
+              choices: [
+                {
+                  id: 'deep_bio_bore',
+                  label: 'Bore Into Active Cryo-Fissure for Living Microbe Assay',
+                  costText: '+175 Science • +85 GB • -24% O₂ • -25 kWh • -12% Hull',
+                  hullDelta: -12,
+                  o2Delta: -24,
+                  powerDelta: -25,
+                  scienceDelta: 175,
+                  dataDelta: 85,
+                  commsSet: null,
+                  log: 'Extracted warm ammonia-water slurry showing catalytic acetylene consumption!'
+                },
+                {
+                  id: 'passive_plume_trap',
+                  label: 'Deploy Passive Cryo-Vapor Trap Above Vent',
+                  costText: '+75 Science • +40 GB • -9% O₂ • -8 kWh Power',
+                  hullDelta: 0,
+                  o2Delta: -9,
+                  powerDelta: -8,
+                  scienceDelta: 75,
+                  dataDelta: 40,
+                  commsSet: null,
+                  log: 'Collected condensed vapor amino-acid precursors without thermal blowout risk.'
+                }
+              ]
+            },
+            {
+              title: 'Subsurface Geothermal Heat Flux Mapping',
+              telemetry: 'ISRU HABITATION POWER & WATER FEASIBILITY',
+              choices: [
+                {
+                  id: 'seismic_thumper',
+                  label: 'Fire High-Energy Acoustic Thumper Into Ice Crust',
+                  costText: '+115 Science • +50 GB • -22 kWh Power • -11% O₂',
+                  hullDelta: -4,
+                  o2Delta: -11,
+                  powerDelta: -22,
+                  scienceDelta: 115,
+                  dataDelta: 50,
+                  commsSet: null,
+                  log: 'Mapped subsurface liquid water table depth for future crewed base.'
+                },
+                {
+                  id: 'thermal_ir_sweep',
+                  label: 'Passive Infrared Thermal Gradient Sweep',
+                  costText: '+50 Science • +25 GB • -6% O₂ • -4 kWh Power',
+                  hullDelta: 0,
+                  o2Delta: -6,
+                  powerDelta: -4,
+                  scienceDelta: 50,
+                  dataDelta: 25,
+                  commsSet: null,
+                  log: 'Logged surface thermal gradient safely with minimal suit expenditure.'
+                }
+              ]
+            }
+          ]
+        }
+      ];
+
+      // =======================================================================
+      // 3. RUNTIME GAME STATE
+      // =======================================================================
+      const state = {
+        phase: 'briefing', // 'briefing' | 'crash' | 'surface' | 'debrief'
+        role: 'engineer',
+        hullAlloc: 50, // 0..100 slider (Higher = stronger ship after crash, less starting O2/Science)
+        extraRTG: true, // Key toggle: +35 kWh RTG power vs +15% starting O2
+
+        // Live Surface Telemetry
+        hull: 55,
+        o2: 75,
+        power: 85,
+        maxPower: 110,
+        thermalCore: 100, // 0..100% Suit Core Temperature against -179°C ambient
+        heatPackTimer: 0, // Seconds remaining of active chemical heating
+        dataUsed: 0,
+        dataMax: 250,
+        scienceScore: 0,
+        scienceMultRuntime: 1.0,
+        comms: 'OFFLINE',
+        siteStage: { lander: 0, comms: 0, lake: 0, vent: 0 },
+        missionLogs: [],
+
+        // EVA Inventory & Field Sampling Tool Belt
+        inventory: {
+          heatPacks: 3,       // Restores thermal core & halves shivering O2 burn for 60s
+          batteryCells: 2,    // Injects +28 kWh power into suit/lander bus
+          naniteSealant: 2,   // Instant aerosol field patch (+18% Hull integrity)
+          drillUsesLeft: 3,   // Cryo-coring drill for lake shoreline & vents
+          samples: []         // Collected cryo-samples (up to 4 canisters)
+        },
+        claimedReward: null,
+
+        // Player Movement & Camera (2.5D Surface World)
+        player: {
+          x: 590,
+          y: 675,
+          targetX: null,
+          targetY: null,
+          facing: 0.4,
+          walkCycle: 0,
+          stepTimer: 0
+        },
+        cam: { x: 590, y: 675 },
+        keys: {},
+        activeLandmarkId: null,
+        openDilemmaSiteId: null,
+
+        // HERMES-9 Socratic AI Advisor
+        advisorOpen: true,
+        advisorMessages: [
+          {
+            sender: 'HERMES-9',
+            text: 'Telemetry online. Titan ambient is 94 K (-179°C). Hull integrity must reach ≥80% for emergency abort or 100% for nominal ascent. Use Toolbelt [1-4] to manage suit heat, battery, and core sampling.'
+          }
+        ],
+
+        // Outcome
+        debriefOutcome: null
+      };
+
+      let rafId = null;
+      let lastTs = 0;
+      let particles = [];
+      let footprints = [];
+
+      // =======================================================================
+      // 4. PRE-LAUNCH ALLOCATION CALCULATION
+      // =======================================================================
+      function getPreLaunchPreview() {
+        const t = state.hullAlloc / 100; // 0 (Light Ship / Rich Supplies) -> 1 (Heavy Ship / Tight Supplies)
+        const startHull = Math.round(28 + t * 50); // 28% to 78%
+        let startO2 = Math.round(98 - t * 44);    // 98% to 54%
+        let startPower = state.extraRTG ? 110 : 75;
+        if (!state.extraRTG) startO2 = Math.min(100, startO2 + 12);
+        const startDataCap = state.role === 'scientist' ? 300 : 250;
+        const hullCostB = (0.7 + t * 1.6).toFixed(2);
+        const supplyCostB = (3.0 - parseFloat(hullCostB)).toFixed(2);
+        return { startHull, startO2, startPower, startDataCap, hullCostB, supplyCostB };
+      }
+
+      // =======================================================================
+      // 5. SOCRATIC AI ADVISOR ("HERMES-9" — NEVER GIVES DIRECT ANSWERS)
+      // =======================================================================
+      function askHermes(promptText) {
+        AudioFX.radarPing();
+        const q = promptText.trim();
+        if (!q) return;
+
+        state.advisorMessages.push({ sender: 'CDR', text: q });
+        const lower = q.toLowerCase();
+
+        const hullGap = Math.max(0, 100 - state.hull);
+        const o2 = Math.round(state.o2);
+        const pwr = Math.round(state.power);
+        const sci = Math.round(state.scienceScore);
+        const therm = Math.round(state.thermalCore);
+        const nearSite = LANDMARKS.find(l => l.id === state.activeLandmarkId);
+
+        let reply = '';
+
+        if (lower.includes('heat') || lower.includes('temp') || lower.includes('cold') || lower.includes('freeze') || lower.includes('chill')) {
+          reply = `Suit thermal core is at ${therm}%. Ambient Titan atmosphere is -179°C (94 K). If core drops below 35%, metabolic shivering accelerates O₂ consumption by 80%. Press [1] to trigger a chemical Cryo-Thermal Heat Pack (${state.inventory.heatPacks} remaining) or return to Site-01 lander shelter.`;
+        } else if (lower.includes('drill') || lower.includes('sample') || lower.includes('canister')) {
+          reply = `Astrobiology Drill has ${state.inventory.drillUsesLeft} charges left (${state.inventory.samples.length}/4 sample canisters sealed). Coring into Kraken Mare shoreline or the Cryovolcanic Vent extracts pristine methane-tholin and prebiotic slurry. Coring elsewhere yields negligible scientific data.`;
+        } else if (lower.includes('item') || lower.includes('inventory') || lower.includes('pack') || lower.includes('tool')) {
+          reply = `Toolbelt stores: ${state.inventory.heatPacks}x Cryo-Heat Packs [1], ${state.inventory.batteryCells}x Li-S Cells [2], ${state.inventory.naniteSealant}x Nanite Seals [3], and ${state.inventory.drillUsesLeft}x Cryo-Drill charges [4]. Deploying resources early reduces systemic failure probability.`;
+        } else if (lower.includes('which') || lower.includes('right') || lower.includes('best') || lower.includes('tell me what')) {
+          reply = `Command protocol prohibits directive selection. Current telemetry shows Hull at ${state.hull}% (${hullGap}% below nominal) and EVA O₂ at ${o2}%. Aggressive sampling yields higher planetary science, whereas conservative scans preserve life-support margin for structural repairs. Weigh which failure mode you are willing to accept.`;
+        } else if (lower.includes('hull') || lower.includes('o2') || lower.includes('oxygen') || lower.includes('risk')) {
+          reply = `Structural deficit is ${hullGap}% with ${o2}% O₂ and ${pwr} kWh remaining. High-output hull sealing accelerates ascent readiness but depletes power or spectrometer efficiency; deep cryogenic sampling at Kraken Mare or the Cryo-Vent consumes 16–24% O₂ per run. Assess whether your remaining O₂ buffer covers both exploration and final hull closure.`;
+        } else if (lower.includes('comms') || lower.includes('lake') || lower.includes('vent') || lower.includes('priorit')) {
+          reply = `Comms Relay is currently ${state.comms} (${state.dataUsed}/${state.dataMax} GB buffered). Restoring Ka-band uplink converts buffered data into confirmed Earth science and opens DSN telemetry, whereas Kraken Mare and the Cryo-Vent offer higher raw discovery yield at steeper thermal and O₂ cost.`;
+        } else if (lower.includes('ascent') || lower.includes('launch') || lower.includes('ready') || lower.includes('leave')) {
+          if (state.hull >= 100) {
+            reply = `Aeroshell integrity is at 100%—nominal for orbital insertion. Remaining O₂ (${o2}%) can either be held as ascent margin or expended on one final local scan before boarding Site-01.`;
+          } else if (state.hull >= 80) {
+            reply = `Hull is at ${state.hull}%: above the 80% emergency abort threshold, though sub-nominal aerodynamic heating carries structural risk during Titan atmospheric exit. Reaching 100% eliminates launch failure probability.`;
+          } else {
+            reply = `Hull is at ${state.hull}%—below the 80% minimum structural threshold for ascent ignition. Additional repairs at Site-01 (or capacitor harvesting) are mandatory before liftoff.`;
+          }
+        } else if (nearSite) {
+          reply = `Proximity telemetry at ${nearSite.name}: ${nearSite.tag}. High-intensity actions here yield superior mission return at elevated O₂/thermal draw; low-intensity options preserve survivability margin. Current reserves: ${o2}% O₂, ${pwr} kWh, ${sci} Science.`;
+        } else {
+          reply = `Live status: Hull ${state.hull}%, O₂ ${o2}%, Suit Temp ${therm}%, Power ${pwr} kWh, Comms ${state.comms}, Science ${sci}. Every kilometer traversed drains O₂; balance site proximity against remaining repair requirements at Site-01.`;
+        }
+
+        state.advisorMessages.push({ sender: 'HERMES-9', text: reply });
+        if (state.advisorMessages.length > 8) {
+          state.advisorMessages = state.advisorMessages.slice(-8);
+        }
+        renderHUD();
+      }
+
+      // =======================================================================
+      // 5B. EVA INVENTORY & TOOLBELT FIELD ACTIONS
+      // =======================================================================
+      function useInventoryItem(itemType) {
+        if (state.phase !== 'surface') return;
+        AudioFX.ensure();
+
+        if (itemType === 'heatPack') {
+          if (state.inventory.heatPacks <= 0) {
+            AudioFX.alert();
+            state.missionLogs.unshift('[TOOLBELT] No Cryo-Heat Packs remaining in PLSS carrier.');
+            renderHUD();
+            return;
+          }
+          state.inventory.heatPacks -= 1;
+          state.heatPackTimer = 60.0;
+          state.thermalCore = 100;
+          AudioFX.beep(480, 'sine', 0.25, 0.08, 920);
+          state.missionLogs.unshift('[TOOLBELT] Activated Cryo-Thermal chemical pack. Internal suit heating online (60s).');
+          state.advisorMessages.push({
+            sender: 'HERMES-9',
+            text: 'Suit thermal core stabilized at 100%. Shivering metabolic O₂ consumption rate neutralized for 60 seconds.'
+          });
+        } else if (itemType === 'battery') {
+          if (state.inventory.batteryCells <= 0) {
+            AudioFX.alert();
+            state.missionLogs.unshift('[TOOLBELT] No auxiliary Li-S cells remaining.');
+            renderHUD();
+            return;
+          }
+          state.inventory.batteryCells -= 1;
+          state.power = Math.min(state.maxPower, state.power + 28);
+          AudioFX.beep(650, 'triangle', 0.18, 0.08, 880);
+          state.missionLogs.unshift('[TOOLBELT] Discharged Li-S auxiliary battery cell (+28 kWh power bus boost).');
+          state.advisorMessages.push({
+            sender: 'HERMES-9',
+            text: `Auxiliary battery discharge verified. Power bus now at ${Math.round(state.power)}/${state.maxPower} kWh.`
+          });
+        } else if (itemType === 'nanites') {
+          if (state.inventory.naniteSealant <= 0) {
+            AudioFX.alert();
+            state.missionLogs.unshift('[TOOLBELT] No Beryllium nanite sealant canisters remaining.');
+            renderHUD();
+            return;
+          }
+          state.inventory.naniteSealant -= 1;
+          const repairBoost = Math.round(18 * ROLES[state.role].repairMult);
+          state.hull = Math.min(100, state.hull + repairBoost);
+          AudioFX.beep(520, 'sawtooth', 0.2, 0.07, 780);
+          state.missionLogs.unshift(`[TOOLBELT] Deployed Beryllium nanite aerosol (+${repairBoost}% Hull integrity).`);
+          state.advisorMessages.push({
+            sender: 'HERMES-9',
+            text: `Micro-fractures sealed by catalytic nanites. Hull integrity reached ${state.hull}%.`
+          });
+        } else if (itemType === 'drill') {
+          if (state.inventory.drillUsesLeft <= 0) {
+            AudioFX.alert();
+            state.missionLogs.unshift('[TOOLBELT] Astrobiology core drill tungsten bit fully worn.');
+            renderHUD();
+            return;
+          }
+          const nearSite = LANDMARKS.find(l => l.id === state.activeLandmarkId);
+          if (!nearSite || (nearSite.id !== 'lake' && nearSite.id !== 'vent')) {
+            AudioFX.alert();
+            state.missionLogs.unshift('[TOOLBELT HAZARD] Core drill requires volatile substrate. Stand near Kraken Mare (Site-03) or Cryo-Vent (Site-04).');
+            state.advisorMessages.push({
+              sender: 'HERMES-9',
+              text: 'Surface ice here is desiccated regolith. Move within 30m of the shoreline or cryovolcanic vent to extract live prebiotic samples.'
+            });
+            renderHUD();
+            return;
+          }
+
+          state.inventory.drillUsesLeft -= 1;
+          AudioFX.beep(160, 'sawtooth', 0.45, 0.09, 280);
+          
+          if (nearSite.id === 'lake') {
+            const sampleName = 'Kraken Mare Liquid Nitrile Sludge';
+            if (!state.inventory.samples.includes(sampleName)) state.inventory.samples.push(sampleName);
+            const sciGain = Math.round(120 * state.scienceMultRuntime);
+            state.scienceScore += sciGain;
+            state.dataUsed = Math.min(state.dataMax, state.dataUsed + 45);
+            state.missionLogs.unshift(`[CORE DRILL] Extracted 10cm benthic sludge cylinder (+${sciGain} Science, +45 GB). Canister sealed.`);
+            state.advisorMessages.push({
+              sender: 'HERMES-9',
+              text: 'Liquid hydrocarbon sludge sample analyzed: complex nitrogen heterocycles identified! Data added to science buffer.'
+            });
+          } else if (nearSite.id === 'vent') {
+            const sampleName = 'Ammonia-Water Cryomagma Slurry';
+            if (!state.inventory.samples.includes(sampleName)) state.inventory.samples.push(sampleName);
+            const sciGain = Math.round(145 * state.scienceMultRuntime);
+            state.scienceScore += sciGain;
+            state.dataUsed = Math.min(state.dataMax, state.dataUsed + 55);
+            state.missionLogs.unshift(`[CORE DRILL] Extracted warm cryomagma core (+${sciGain} Science, +55 GB). Canister sealed.`);
+            state.advisorMessages.push({
+              sender: 'HERMES-9',
+              text: 'Subsurface ammonia-water core shows catalytic acetylene depletion! Prime biomarker candidate logged.'
+            });
+          }
+        }
+
+        renderHUD();
+      }
+
+      // =======================================================================
+      // 6. LAUNCH -> CRASH -> SURFACE TRANSITIONS
+      // =======================================================================
+      function startMissionFromBriefing() {
+        AudioFX.click();
+        const prev = getPreLaunchPreview();
+        state.hull = prev.startHull;
+        state.o2 = prev.startO2;
+        state.power = prev.startPower;
+        state.maxPower = prev.startPower;
+        state.dataUsed = 0;
+        state.dataMax = prev.startDataCap;
+        state.scienceScore = 0;
+        state.scienceMultRuntime = ROLES[state.role].scienceMult;
+        state.comms = 'OFFLINE';
+        state.siteStage = { lander: 0, comms: 0, lake: 0, vent: 0 };
+        state.missionLogs = [];
+        state.inventory = { heatPacks: 3, batteryCells: 2, naniteSealant: 2, drillUsesLeft: 3, samples: [] };
+        state.thermalCore = 100;
+        state.heatPackTimer = 0;
+        state.claimedReward = null;
+        state.player = { x: 590, y: 675, targetX: null, targetY: null, facing: 0.4, walkCycle: 0, stepTimer: 0 };
+        state.cam = { x: 590, y: 675 };
+        state.openDilemmaSiteId = null;
+        state.debriefOutcome = null;
+
+        state.phase = 'crash';
+        AudioFX.crashImpact();
+        render();
+
+        setTimeout(() => {
+          state.phase = 'surface';
+          initSurfaceParticles();
+          render();
+          startSurfaceLoop();
+        }, 2800);
+      }
+
+      function initSurfaceParticles() {
+        particles = Array.from({ length: 70 }, () => ({
+          x: Math.random() * 1800,
+          y: Math.random() * 1150,
+          r: Math.random() * 2.2 + 0.6,
+          vx: 14 + Math.random() * 18,
+          vy: 6 + Math.random() * 10,
+          alpha: 0.15 + Math.random() * 0.35
+        }));
+        footprints = [];
+      }
+
+      // =======================================================================
+      // 7. DILEMMA RESOLUTION & ASCENT TRIGGER
+      // =======================================================================
+      function resolveDilemmaChoice(siteId, choiceId) {
+        const site = LANDMARKS.find(l => l.id === siteId);
+        if (!site) return;
+        const stageIdx = state.siteStage[siteId] || 0;
+        const dilemma = site.dilemmas[stageIdx];
+        if (!dilemma) return;
+        const ch = dilemma.choices.find(c => c.id === choiceId);
+        if (!ch) return;
+
+        const role = ROLES[state.role];
+
+        // Apply Role-Modified Deltas
+        let hullDelta = ch.hullDelta > 0 ? Math.round(ch.hullDelta * role.repairMult) : ch.hullDelta;
+        let o2Delta = ch.o2Delta < 0 ? Math.round(ch.o2Delta * role.o2BurnMult) : ch.o2Delta;
+        let sciDelta = ch.scienceDelta > 0 ? Math.round(ch.scienceDelta * state.scienceMultRuntime) : ch.scienceDelta;
+
+        if (ch.powerDelta < 0 && state.power < Math.abs(ch.powerDelta)) {
+          AudioFX.alert();
+          state.advisorMessages.push({
+            sender: 'HERMES-9',
+            text: `INSUFFICIENT POWER: Action requires ${Math.abs(ch.powerDelta)} kWh (only ${Math.round(state.power)} kWh available).`
+          });
+          renderHUD();
+          return;
+        }
+
+        state.hull = Math.max(5, Math.min(100, state.hull + hullDelta));
+        state.o2 = Math.max(0, Math.min(100, state.o2 + o2Delta));
+        state.power = Math.max(0, Math.min(state.maxPower, state.power + ch.powerDelta));
+        state.scienceScore = Math.max(0, state.scienceScore + sciDelta);
+        state.dataUsed = Math.max(0, Math.min(state.dataMax, state.dataUsed + ch.dataDelta));
+        if (ch.sciencePenalty) {
+          state.scienceMultRuntime = Math.max(0.5, state.scienceMultRuntime - ch.sciencePenalty);
+        }
+        if (ch.commsSet) {
+          state.comms = ch.commsSet;
+        }
+
+        state.siteStage[siteId] = stageIdx + 1;
+        state.openDilemmaSiteId = null;
+        state.missionLogs.unshift(`[${site.code}] ${ch.log}`);
+
+        if (hullDelta < 0 || o2Delta <= -18) AudioFX.alert();
+        else AudioFX.radarPing();
+
+        if (state.o2 <= 0) {
+          triggerDebrief(false, 'EVA OXYGEN DEPLETED ON TITAN SURFACE');
+          return;
+        }
+
+        renderHUD();
+      }
+
+      function attemptAscentLaunch() {
+        if (state.hull < 80) {
+          AudioFX.alert();
+          return;
+        }
+        AudioFX.crashImpact();
+        // If hull is between 80% and 99%, small aerodynamic failure risk during ascent
+        if (state.hull < 100) {
+          const survivalChance = 0.45 + ((state.hull - 80) / 20) * 0.5;
+          if (Math.random() > survivalChance) {
+            triggerDebrief(false, `AEROSHELL BREACH DURING ASCENT AT ${state.hull}% HULL INTEGRITY`);
+            return;
+          }
+        }
+        triggerDebrief(true, 'ORBITAL INSERTION CONFIRMED // TITAN ASCENT SUCCESSFUL');
+      }
+
+      function triggerDebrief(survived, headline) {
+        stopSurfaceLoop();
+        state.phase = 'debrief';
+
+        const hullPts = survived ? Math.round((state.hull / 100) * 35) : 0;
+        const sciPts = Math.min(40, Math.round((state.scienceScore / 420) * 40));
+        const commsBonus = state.comms === 'ONLINE' ? 10 : 0;
+        const marginPts = survived ? Math.min(15, Math.round((state.o2 / 100) * 10 + (state.power / state.maxPower) * 5)) : 0;
+        const total = Math.min(100, hullPts + sciPts + commsBonus + marginPts);
+
+        let grade = 'MISSION FAILURE';
+        let color = 'text-rose-400';
+        if (survived && total >= 82) { grade = 'HISTORIC NASA EXPEDITION'; color = 'text-cyan-400'; }
+        else if (survived && total >= 60) { grade = 'MISSION SUCCESS'; color = 'text-emerald-400'; }
+        else if (survived) { grade = 'SURVIVAL // LOW DATA YIELD'; color = 'text-amber-400'; }
+
+        state.debriefOutcome = { survived, headline, total, hullPts, sciPts, commsBonus, marginPts, grade, color };
+        render();
+
+        if (typeof mergeConfig.onComplete === 'function') {
+          mergeConfig.onComplete(state.debriefOutcome);
+        }
+      }
+
+      // =======================================================================
+      // 8. 2.5D PLAYABLE TITAN SURFACE ENGINE (CANVAS RENDER & MOVEMENT)
+      // =======================================================================
+      function startSurfaceLoop() {
+        stopSurfaceLoop();
+        lastTs = performance.now();
+
+        const onKeyDown = (e) => {
+          state.keys[e.key.toLowerCase()] = true;
+          if ((e.key === 'e' || e.key === 'E' || e.key === ' ') && state.phase === 'surface' && !state.openDilemmaSiteId) {
+            if (state.activeLandmarkId) {
+              AudioFX.click();
+              state.openDilemmaSiteId = state.activeLandmarkId;
+              renderHUD();
+            }
+          }
+          if (state.phase === 'surface' && !state.openDilemmaSiteId) {
+            if (e.key === '1') useInventoryItem('heatPack');
+            if (e.key === '2') useInventoryItem('battery');
+            if (e.key === '3') useInventoryItem('nanites');
+            if (e.key === '4') useInventoryItem('drill');
+          }
+          if (e.key === 'Escape' && state.openDilemmaSiteId) {
+            state.openDilemmaSiteId = null;
+            renderHUD();
+          }
+        };
+        const onKeyUp = (e) => { state.keys[e.key.toLowerCase()] = false; };
+
+        window._titanKeyDown = onKeyDown;
+        window._titanKeyUp = onKeyUp;
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
+
+        function tick(now) {
+          const dt = Math.min(0.05, (now - lastTs) / 1000);
+          lastTs = now;
+          updateSurface(dt);
+          drawSurface();
+          rafId = requestAnimationFrame(tick);
+        }
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function stopSurfaceLoop() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+        if (window._titanKeyDown) window.removeEventListener('keydown', window._titanKeyDown);
+        if (window._titanKeyUp) window.removeEventListener('keyup', window._titanKeyUp);
+      }
+
+      function handleCanvasClick(e) {
+        if (state.phase !== 'surface' || state.openDilemmaSiteId) return;
+        AudioFX.ensure();
+        const canvas = document.getElementById('titan-surface-canvas');
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const clickScreenX = e.clientX - rect.left;
+        const clickScreenY = e.clientY - rect.top;
+
+        const worldX = state.cam.x - rect.width / 2 + clickScreenX;
+        const worldY = state.cam.y - rect.height / 2 + clickScreenY;
+
+        // Check if player clicked directly on a nearby landmark
+        const clickedSite = LANDMARKS.find(l => Math.hypot(l.x - worldX, l.y - worldY) <= l.radius + 25);
+        if (clickedSite && Math.hypot(clickedSite.x - state.player.x, clickedSite.y - state.player.y) <= clickedSite.radius + 45) {
+          AudioFX.click();
+          state.openDilemmaSiteId = clickedSite.id;
+          renderHUD();
+          return;
+        }
+
+        // Otherwise set click-to-walk waypoint
+        state.player.targetX = Math.max(140, Math.min(1660, worldX));
+        state.player.targetY = Math.max(160, Math.min(1020, worldY));
+        AudioFX.click();
+      }
+
+      function updateSurface(dt) {
+        if (state.phase !== 'surface') return;
+
+        // Update atmospheric hydrocarbon particles
+        particles.forEach(p => {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (p.x > 1800) p.x = 0;
+          if (p.y > 1150) p.y = 0;
+        });
+
+        // Thermal Core & Cryogenic Hazard Simulation (-179°C)
+        if (state.heatPackTimer > 0) {
+          state.heatPackTimer = Math.max(0, state.heatPackTimer - dt);
+          state.thermalCore = Math.min(100, state.thermalCore + 25 * dt);
+        } else {
+          const isNearLander = Math.hypot(520 - state.player.x, 620 - state.player.y) <= 120;
+          if (isNearLander) {
+            state.thermalCore = Math.min(100, state.thermalCore + 15 * dt);
+          } else {
+            state.thermalCore = Math.max(12, state.thermalCore - 0.7 * dt);
+          }
+        }
+
+        // Pause movement while dilemma modal is open
+        if (state.openDilemmaSiteId) return;
+
+        let dx = 0;
+        let dy = 0;
+        if (state.keys['w'] || state.keys['arrowup']) dy -= 1;
+        if (state.keys['s'] || state.keys['arrowdown']) dy += 1;
+        if (state.keys['a'] || state.keys['arrowleft']) dx -= 1;
+        if (state.keys['d'] || state.keys['arrowright']) dx += 1;
+
+        if (dx !== 0 || dy !== 0) {
+          state.player.targetX = null;
+          state.player.targetY = null;
+        } else if (state.player.targetX !== null && state.player.targetY !== null) {
+          const tx = state.player.targetX - state.player.x;
+          const ty = state.player.targetY - state.player.y;
+          const dist = Math.hypot(tx, ty);
+          if (dist > 8) {
+            dx = tx / dist;
+            dy = ty / dist;
+          } else {
+            state.player.targetX = null;
+            state.player.targetY = null;
+          }
+        }
+
+        const mag = Math.hypot(dx, dy);
+        if (mag > 0) {
+          const speed = 185; // Low-gravity Titan EVA stride
+          const nx = dx / mag;
+          const ny = dy / mag;
+          state.player.x = Math.max(140, Math.min(1660, state.player.x + nx * speed * dt));
+          state.player.y = Math.max(160, Math.min(1020, state.player.y + ny * speed * dt));
+          state.player.facing = Math.atan2(ny, nx);
+          state.player.walkCycle += dt * 10;
+          state.player.stepTimer += dt;
+
+          // EVA O2 burn: increases significantly if suit is freezing (< 35% thermal)
+          let burnRate = 0.42 * ROLES[state.role].o2BurnMult;
+          if (state.thermalCore < 35) burnRate *= 1.75; // Shivering hypothermia metabolic drain
+          state.o2 = Math.max(0, state.o2 - burnRate * dt);
+          if (state.o2 <= 0) {
+            triggerDebrief(false, 'EVA OXYGEN DEPLETED DURING SURFACE TRAVERSE');
+            return;
+          }
+
+          if (state.player.stepTimer >= 0.36) {
+            state.player.stepTimer = 0;
+            AudioFX.footstep();
+            footprints.push({ x: state.player.x, y: state.player.y + 12, alpha: 0.55 });
+            if (footprints.length > 45) footprints.shift();
+          }
+        }
+
+        // Smooth camera follow
+        state.cam.x += (state.player.x - state.cam.x) * Math.min(1, dt * 6.5);
+        state.cam.y += (state.player.y - state.cam.y) * Math.min(1, dt * 6.5);
+
+        // Proximity detection to 4 Landmarks
+        let nearest = null;
+        for (const site of LANDMARKS) {
+          const d = Math.hypot(site.x - state.player.x, site.y - state.player.y);
+          if (d <= site.radius + 35) {
+            nearest = site.id;
+            break;
+          }
+        }
+        if (nearest !== state.activeLandmarkId) {
+          state.activeLandmarkId = nearest;
+          if (nearest) AudioFX.radarPing();
+          renderHUD();
+        } else if (mag > 0) {
+          // Lightweight O2 readout update during movement
+          const o2El = document.getElementById('hud-o2-val');
+          const o2Bar = document.getElementById('hud-o2-bar');
+          if (o2El) o2El.textContent = `${Math.ceil(state.o2)}%`;
+          if (o2Bar) o2Bar.style.width = `${Math.max(0, state.o2)}%`;
+        }
+      }
+
+      function drawSurface() {
+        const canvas = document.getElementById('titan-surface-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const cw = (canvas.width = canvas.clientWidth);
+        const ch = (canvas.height = canvas.clientHeight);
+
+        const ox = cw / 2 - state.cam.x;
+        const oy = ch / 2 - state.cam.y;
+
+        // 1. Deep Amber-Brown Tholin Ground Base
+        ctx.fillStyle = '#140c06';
+        ctx.fillRect(0, 0, cw, ch);
+
+        // 2. Distant Horizon Sky & Giant Ringed Saturn (Parallax)
+        const skyH = Math.max(0, 210 + oy * 0.45);
+        if (skyH > 0) {
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, skyH);
+          skyGrad.addColorStop(0, '#090604');
+          skyGrad.addColorStop(0.55, '#451a03');
+          skyGrad.addColorStop(1, '#b45309');
+          ctx.fillStyle = skyGrad;
+          ctx.fillRect(0, 0, cw, skyH);
+
+          // Giant Ringed Saturn
+          const sx = cw * 0.72 - (state.cam.x - 900) * 0.08;
+          const sy = skyH * 0.48;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.globalAlpha = 0.55;
+          ctx.strokeStyle = 'rgba(253, 230, 138, 0.55)';
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 110, 22, -0.28, Math.PI, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#d97706';
+          ctx.beginPath();
+          ctx.arc(0, 0, 42, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 110, 22, -0.28, 0, Math.PI);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.save();
+        ctx.translate(ox, oy);
+
+        // 3. Topographic Telemetry Grid & Tholin Dunes
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.07)';
+        ctx.lineWidth = 1;
+        for (let gx = 0; gx <= 1800; gx += 120) {
+          ctx.beginPath(); ctx.moveTo(gx, 140); ctx.lineTo(gx, 1060); ctx.stroke();
+        }
+        for (let gy = 140; gy <= 1060; gy += 120) {
+          ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(1800, gy); ctx.stroke();
+        }
+
+        // Tholin Sand Dunes
+        ctx.fillStyle = '#1f1208';
+        ctx.beginPath();
+        ctx.ellipse(420, 440, 260, 75, 0.1, 0, Math.PI * 2);
+        ctx.ellipse(1060, 860, 310, 85, -0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 4. Kraken Mare Liquid Methane Sea (Bottom-Right Region)
+        const seaGrad = ctx.createRadialGradient(1480, 840, 40, 1480, 840, 430);
+        seaGrad.addColorStop(0, '#083344');
+        seaGrad.addColorStop(0.65, '#0c4a6e');
+        seaGrad.addColorStop(1, '#140c06');
+        ctx.fillStyle = seaGrad;
+        ctx.beginPath();
+        ctx.ellipse(1490, 830, 360, 240, -0.18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shoreline Foam Ring
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(1490, 830, 330, 215, -0.18, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 5. Crash Skid Trench Behind Lander
+        ctx.strokeStyle = 'rgba(10, 6, 3, 0.85)';
+        ctx.lineWidth = 34;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(190, 490);
+        ctx.lineTo(510, 620);
+        ctx.stroke();
+
+        // 6. Footprints in Tholin Dust
+        footprints.forEach(fp => {
+          fp.alpha *= 0.996;
+          ctx.fillStyle = `rgba(0, 0, 0, ${fp.alpha})`;
+          ctx.beginPath();
+          ctx.ellipse(fp.x, fp.y, 5, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 7. Click-to-Walk Waypoint Marker
+        if (state.player.targetX !== null) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(state.player.targetX, state.player.targetY, 12 + Math.sin(performance.now() * 0.01) * 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // 8. Draw 4 Interactive Landmarks
+        LANDMARKS.forEach(site => {
+          const isNear = state.activeLandmarkId === site.id;
+          const doneCount = state.siteStage[site.id] || 0;
+          const totalStages = site.dilemmas.length;
+
+          // Proximity Radar Ring
+          ctx.strokeStyle = isNear ? site.color : 'rgba(255,255,255,0.14)';
+          ctx.lineWidth = isNear ? 2.5 : 1.2;
+          ctx.setLineDash([6, 6]);
+          ctx.beginPath();
+          ctx.arc(site.x, site.y, site.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Custom Landmark Artwork
+          if (site.id === 'lander') {
+            // Crashed Titan Lander
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(site.x - 42, site.y + 22);
+            ctx.lineTo(site.x - 24, site.y - 26);
+            ctx.lineTo(site.x + 24, site.y - 26);
+            ctx.lineTo(site.x + 42, site.y + 22);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // Lander Legs
+            ctx.beginPath();
+            ctx.moveTo(site.x - 36, site.y + 12); ctx.lineTo(site.x - 56, site.y + 34);
+            ctx.moveTo(site.x + 36, site.y + 12); ctx.lineTo(site.x + 56, site.y + 34);
+            ctx.stroke();
+          } else if (site.id === 'comms') {
+            // High-Gain Parabolic Dish
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(site.x, site.y + 26);
+            ctx.lineTo(site.x, site.y - 8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(site.x, site.y - 16, 26, 0.2 * Math.PI, 0.8 * Math.PI);
+            ctx.stroke();
+          } else if (site.id === 'lake') {
+            // Methane Sampling Buoy / Shoreline Marker
+            ctx.fillStyle = '#083344';
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(site.x, site.y, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else if (site.id === 'vent') {
+            // Cryovolcanic Fissure Glow
+            const glow = ctx.createRadialGradient(site.x, site.y, 4, site.x, site.y, 44);
+            glow.addColorStop(0, 'rgba(52, 211, 153, 0.85)');
+            glow.addColorStop(1, 'rgba(52, 211, 153, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(site.x, site.y, 44, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Floating Site Beacon Label
+          ctx.font = '600 11px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = isNear ? '#ffffff' : '#cbd5e1';
+          ctx.fillText(`${site.code} // ${site.name}`, site.x, site.y - site.radius - 10);
+
+          ctx.font = '500 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = doneCount >= totalStages ? '#34d399' : site.color;
+          ctx.fillText(
+            doneCount >= totalStages ? '✓ SITE COMPLETE' : isNear ? '[E] OR CLICK TO INSPECT' : `TASKS: ${doneCount}/${totalStages}`,
+            site.x,
+            site.y - site.radius + 4
+          );
+        });
+
+        // 9. Draw Astronaut EVA Character + Headlamp Cone
+        const px = state.player.x;
+        const py = state.player.y;
+        const bob = Math.sin(state.player.walkCycle) * 2.5;
+
+        // Headlamp Volumetric Cone
+        ctx.save();
+        ctx.translate(px, py - 8);
+        ctx.rotate(state.player.facing);
+        const cone = ctx.createRadialGradient(0, 0, 8, 90, 0, 145);
+        cone.addColorStop(0, 'rgba(254, 243, 199, 0.34)');
+        cone.addColorStop(1, 'rgba(254, 243, 199, 0)');
+        ctx.fillStyle = cone;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 145, -0.38, 0.38);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Ground Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.beginPath();
+        ctx.ellipse(px, py + 15, 13, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // EVA PLSS Backpack
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - 10, py - 14 + bob, 20, 18);
+
+        // Spacesuit Torso
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.roundRect(px - 8, py - 12 + bob, 16, 18, 5);
+        ctx.fill();
+
+        // Gold Reflective Astronaut Helmet
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(px, py - 18 + bob, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(px + Math.cos(state.player.facing) * 2.5, py - 18 + bob, 6.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 10. Drifting Hydrocarbon Mist Particles
+        particles.forEach(p => {
+          ctx.fillStyle = `rgba(251, 191, 36, ${p.alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.restore();
+      }
+
+      // =======================================================================
+      // 9. UI SCREENS & MINIMALIST AEROSPACE HUD RENDERING
+      // =======================================================================
+      function render() {
+        const root = document.getElementById(mergeConfig.containerId);
+        if (!root) return;
+
+        if (state.phase === 'briefing') {
+          const prev = getPreLaunchPreview();
+          root.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center p-4 bg-[radial-gradient(circle_at_top,#291506_0%,#070504_75%)]">
+              <div class="jpl-panel rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6">
+                <div class="flex items-center justify-between border-b border-amber-500/20 pb-4">
+                  <div class="flex items-center gap-3">
+                    <img src="/static/assets/khagol_logo.png" alt="KHAGOL" class="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+                    <div>
+                      <div class="font-mono text-xs text-amber-400 tracking-widest">KHAGOL // EXPEDITION 2048</div>
+                      <h1 class="text-2xl sm:text-3xl font-bold text-white mt-0.5">TITAN: LAST TRANSMISSION</h1>
+                    </div>
+                  </div>
+                  <button onclick="TitanMissionModule.toggleAudioBtn()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 font-mono text-xs text-amber-300 cursor-pointer">
+                    ${AudioFX.muted ? '🔇 MUTED' : '🔊 AUDIO'}
+                  </button>
+                </div>
+
+                <!-- 1. Role Selection -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  ${Object.values(ROLES).map(r => {
+                    const active = state.role === r.id;
+                    return `
+                      <button onclick="TitanMissionModule.setRole('${r.id}')"
+                        class="text-left p-4 rounded-2xl border transition-all cursor-pointer ${active ? 'bg-amber-500/15 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]' : 'bg-slate-950/70 border-slate-800 hover:border-slate-600'}">
+                        <div class="font-mono text-[10px] text-cyan-400">${r.code} SPECIALIST</div>
+                        <div class="font-bold text-white text-base mt-0.5">${r.title}</div>
+                        <div class="font-mono text-[11px] text-amber-200 mt-1.5">${r.perk}</div>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+
+                <!-- 2. High-Stakes Pre-Launch Trade-Off Slider ($3.0B Budget) -->
+                <div class="bg-slate-950/85 rounded-2xl p-5 border border-slate-800 space-y-4">
+                  <div class="flex justify-between items-center font-mono text-xs">
+                    <span class="text-cyan-400 font-bold">LIFE SUPPORT &amp; SCIENCE ($${prev.supplyCostB}B)</span>
+                    <span class="text-slate-400">BUDGET: $3.00B</span>
+                    <span class="text-amber-400 font-bold">AEROSHELL ARMOR ($${prev.hullCostB}B)</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="${state.hullAlloc}"
+                    oninput="TitanMissionModule.setHullAlloc(this.value)" class="jpl-slider" />
+
+                  <div class="grid grid-cols-3 gap-3 pt-1 font-mono text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                      <div class="text-[10px] text-slate-400">POST-CRASH HULL</div>
+                      <div class="text-lg font-bold text-amber-400">${prev.startHull}%</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                      <div class="text-[10px] text-slate-400">EVA OXYGEN</div>
+                      <div class="text-lg font-bold text-cyan-400">${prev.startO2}%</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                      <div class="text-[10px] text-slate-400">RTG POWER</div>
+                      <div class="text-lg font-bold text-emerald-400">${prev.startPower} kWh</div>
+                    </div>
+                  </div>
+
+                  <label class="flex items-center justify-between pt-2 border-t border-slate-800/80 cursor-pointer font-mono text-xs">
+                    <span class="text-slate-300">Auxiliary Pu-238 RTG (+35 kWh Power / -12% Starting O₂)</span>
+                    <input type="checkbox" ${state.extraRTG ? 'checked' : ''} onchange="TitanMissionModule.toggleRTG(this.checked)"
+                      class="w-4 h-4 accent-amber-500 cursor-pointer" />
+                  </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  ${mergeConfig.onReturnToHub ? `
+                    <button onclick="TitanMissionModule.returnToHub()" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 font-mono text-xs text-slate-300 cursor-pointer">
+                      ← HUB
+                    </button>
+                  ` : '<div></div>'}
+                  <button onclick="TitanMissionModule.launchMission()"
+                    class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-cyan-500 hover:from-amber-400 hover:to-cyan-400 text-slate-950 font-mono font-bold text-sm tracking-wider shadow-[0_0_25px_rgba(245,158,11,0.4)] cursor-pointer">
+                    INITIATE TITAN DESCENT →
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        if (state.phase === 'crash') {
+          root.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center p-6 bg-[radial-gradient(circle,#7c2d12_0%,#090503_85%)] shaking">
+              <div class="jpl-panel rounded-3xl max-w-lg w-full p-8 text-center border-2 border-rose-500/80 space-y-4">
+                <div class="font-mono text-xs text-rose-400 tracking-widest animate-ping">WARNING // EDL GUIDANCE ANOMALY</div>
+                <h2 class="text-3xl font-bold text-white">IMPACT ON TITAN SURFACE</h2>
+                <p class="font-mono text-xs text-amber-200">
+                  Methane-nitrogen crosswind shear exceeded retro-thruster margin. Lander hull integrity reduced to <strong class="text-rose-400">${state.hull}%</strong>. Depressurizing EVA airlock...
+                </p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        if (state.phase === 'surface') {
+          root.innerHTML = `
+            <div class="relative w-full h-full">
+              <canvas id="titan-surface-canvas" onclick="TitanMissionModule.canvasClick(event)" class="w-full h-full block cursor-crosshair"></canvas>
+              <div id="titan-surface-hud" class="pointer-events-none absolute inset-0 p-3 sm:p-4 flex flex-col justify-between"></div>
+            </div>
+          `;
+          renderHUD();
+          return;
+        }
+
+        if (state.phase === 'debrief' && state.debriefOutcome) {
+          const d = state.debriefOutcome;
+          root.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center p-4 bg-[radial-gradient(circle_at_top,#1e1b18_0%,#070504_80%)]">
+              <div class="jpl-panel rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <div class="font-mono text-xs text-amber-400">${d.headline}</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold ${d.color} mt-1">${d.grade}</h2>
+                  </div>
+                  <div class="bg-slate-950 border-2 border-amber-400/60 rounded-2xl px-5 py-3 text-center">
+                    <div class="font-mono text-[10px] text-slate-400">NASA SCORE</div>
+                    <div class="font-mono text-4xl font-bold text-white">${d.total}<span class="text-base text-slate-500">/100</span></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                  <div class="bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                    <div class="text-slate-400 text-[10px]">STRUCTURAL</div>
+                    <div class="text-amber-400 font-bold text-base mt-0.5">${d.hullPts}/35</div>
+                  </div>
+                  <div class="bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                    <div class="text-slate-400 text-[10px]">SCIENCE</div>
+                    <div class="text-cyan-400 font-bold text-base mt-0.5">${d.sciPts}/40</div>
+                  </div>
+                  <div class="bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                    <div class="text-slate-400 text-[10px]">DSN UPLINK</div>
+                    <div class="text-emerald-400 font-bold text-base mt-0.5">${d.commsBonus}/10</div>
+                  </div>
+                  <div class="bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                    <div class="text-slate-400 text-[10px]">O₂ / PWR MARGIN</div>
+                    <div class="text-purple-400 font-bold text-base mt-0.5">${d.marginPts}/15</div>
+                  </div>
+                </div>
+
+                <!-- Surface Operations & Sampling Log -->
+                <div class="bg-slate-950/80 rounded-xl p-3.5 border border-slate-800 max-h-36 overflow-y-auto thin-scroll font-mono text-[11px] text-slate-300 space-y-1">
+                  ${state.inventory.samples.length ? `<div class="text-cyan-300 font-bold">✓ SEALED ASTROBIOLOGY CANISTERS: ${state.inventory.samples.join(' • ')}</div>` : ''}
+                  ${state.missionLogs.length ? state.missionLogs.map(l => `<div>• ${l}</div>`).join('') : '<div>• No surface operations logged.</div>'}
+                </div>
+
+                <!-- Agency Integration Bridge Banner -->
+                <div id="agency-claim-box" class="p-3.5 rounded-2xl bg-slate-950/90 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+                  <div>
+                    <div class="text-amber-400 font-bold">SPACE AGENCY CAMPAIGN LINK</div>
+                    <div class="text-slate-300 text-[11px] mt-0.5">Transfer Titan flight telemetry, planetary cores, and engineering data to Agency Headquarters.</div>
+                  </div>
+                  ${state.claimedReward ? `
+                    <div class="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1.5 rounded-xl border border-emerald-500/40">
+                      ✓ REWARDS CLAIMED: +${state.claimedReward.rp_earned} RP • +$${(state.claimedReward.funds_payout / 1e6).toFixed(0)}M
+                    </div>
+                  ` : `
+                    <button onclick="TitanMissionModule.claimExpeditionReward()" id="btn-claim-reward"
+                      class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-cyan-500 text-slate-950 font-bold text-xs shadow-[0_0_15px_rgba(245,158,11,0.4)] cursor-pointer">
+                      TRANSFER DATA TO AGENCY HQ →
+                    </button>
+                  `}
+                </div>
+
+                <div class="flex justify-between items-center gap-3">
+                  <a href="/app" target="_top" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 font-mono text-xs text-cyan-300 no-underline cursor-pointer">
+                    ← RETURN TO WORKSTATION
+                  </a>
+                  <button onclick="TitanMissionModule.reset()"
+                    class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs cursor-pointer">
+                    ↻ RE-RUN TITAN EXPEDITION
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // =======================================================================
+      // 10. SLEEK SURFACE HUD OVERLAY (TELEMETRY + SOCRATIC AI + DILEMMA MODAL)
+      // =======================================================================
+      function renderHUD() {
+        const hud = document.getElementById('titan-surface-hud');
+        if (!hud) return;
+
+        const nearSite = LANDMARKS.find(l => l.id === state.activeLandmarkId);
+        const modalSite = LANDMARKS.find(l => l.id === state.openDilemmaSiteId);
+        const modalDilemma = modalSite ? modalSite.dilemmas[state.siteStage[modalSite.id] || 0] : null;
+        const canLaunch = state.hull >= 80;
+
+        hud.innerHTML = `
+          <!-- TOP ROW: COMPACT TELEMETRY BARS & ASCENT TRIGGER -->
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="pointer-events-auto jpl-panel rounded-2xl p-3 flex flex-wrap items-center gap-3 sm:gap-4 font-mono text-xs">
+              <div>
+                <div class="text-[10px] text-slate-400">HULL (${state.hull >= 100 ? 'READY' : 'REQ 100%'})</div>
+                <div class="text-sm font-bold text-amber-400">${state.hull}%</div>
+                <div class="w-20 h-1.5 bg-slate-900 rounded-full mt-1"><div class="h-full bg-amber-400 rounded-full" style="width:${state.hull}%"></div></div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">EVA OXYGEN</div>
+                <div id="hud-o2-val" class="text-sm font-bold ${state.o2 < 25 ? 'text-rose-400 animate-pulse' : 'text-cyan-400'}">${Math.ceil(state.o2)}%</div>
+                <div class="w-20 h-1.5 bg-slate-900 rounded-full mt-1"><div id="hud-o2-bar" class="h-full bg-cyan-400 rounded-full" style="width:${state.o2}%"></div></div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">SUIT TEMP (-179°C)</div>
+                <div class="text-sm font-bold ${state.thermalCore < 35 ? 'text-rose-400 animate-pulse' : 'text-amber-300'}">${Math.round(state.thermalCore)}% ${state.heatPackTimer > 0 ? '🔥 WARM' : ''}</div>
+                <div class="w-20 h-1.5 bg-slate-900 rounded-full mt-1">
+                  <div class="h-full ${state.thermalCore < 35 ? 'bg-rose-500' : 'bg-amber-400'} rounded-full transition-all" style="width:${Math.round(state.thermalCore)}%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">RTG POWER</div>
+                <div class="text-sm font-bold text-emerald-400">${Math.round(state.power)} kWh</div>
+                <div class="w-20 h-1.5 bg-slate-900 rounded-full mt-1"><div class="h-full bg-emerald-400 rounded-full" style="width:${Math.round((state.power / state.maxPower) * 100)}%"></div></div>
+              </div>
+              <div class="border-l border-slate-800 pl-3">
+                <div class="text-[10px] text-slate-400">SCIENCE // COMMS</div>
+                <div class="text-sm font-bold text-white">${Math.round(state.scienceScore)} <span class="text-[10px] ${state.comms === 'ONLINE' ? 'text-emerald-400' : 'text-rose-400'}">[${state.comms}]</span></div>
+                <div class="text-[10px] text-slate-400">SSD: ${state.dataUsed}/${state.dataMax} GB</div>
+              </div>
+            </div>
+
+            <div class="pointer-events-auto flex items-center gap-2">
+              <button onclick="TitanMissionModule.attemptAscent()"
+                class="px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${canLaunch
+                  ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-[0_0_20px_rgba(52,211,153,0.45)]'
+                  : 'jpl-panel text-slate-400 opacity-75'}">
+                ${state.hull >= 100 ? '🚀 IGNITE ASCENT (100%)' : state.hull >= 80 ? `⚠ RISK LAUNCH (${state.hull}%)` : `🔒 HULL ${state.hull}% (<80%)`}
+              </button>
+              <button onclick="TitanMissionModule.toggleAdvisor()" class="px-3 py-2.5 rounded-xl jpl-cyan font-mono text-xs text-cyan-300 cursor-pointer">
+                HERMES-9 ${state.advisorOpen ? '▾' : '▸'}
+              </button>
+              <button onclick="TitanMissionModule.toggleAudioBtn()" class="px-3 py-2.5 rounded-xl jpl-panel font-mono text-xs text-amber-300 cursor-pointer">
+                ${AudioFX.muted ? '🔇' : '🔊'}
+              </button>
+            </div>
+          </div>
+
+          <!-- DOCK: EVA INVENTORY TOOLBELT -->
+          <div class="flex justify-start pt-2">
+            <div class="pointer-events-auto jpl-panel rounded-2xl px-3.5 py-2 flex flex-wrap items-center gap-2 font-mono text-xs border border-amber-500/30">
+              <span class="text-amber-400 font-bold text-[10px] tracking-wider">EVA TOOLBELT:</span>
+              <button onclick="TitanMissionModule.useItem('heatPack')"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer ${state.inventory.heatPacks > 0 ? 'bg-slate-900 border border-amber-500/50 hover:border-amber-400 text-amber-200' : 'bg-slate-950/60 border border-slate-800 text-slate-500 opacity-60'}">
+                <span>🔥 [1] Cryo-Heat (${state.inventory.heatPacks})</span>
+              </button>
+              <button onclick="TitanMissionModule.useItem('battery')"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer ${state.inventory.batteryCells > 0 ? 'bg-slate-900 border border-emerald-500/50 hover:border-emerald-400 text-emerald-200' : 'bg-slate-950/60 border border-slate-800 text-slate-500 opacity-60'}">
+                <span>⚡ [2] Li-S Cell (${state.inventory.batteryCells})</span>
+              </button>
+              <button onclick="TitanMissionModule.useItem('nanites')"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer ${state.inventory.naniteSealant > 0 ? 'bg-slate-900 border border-cyan-500/50 hover:border-cyan-400 text-cyan-200' : 'bg-slate-950/60 border border-slate-800 text-slate-500 opacity-60'}">
+                <span>🛠 [3] Nanite Seal (${state.inventory.naniteSealant})</span>
+              </button>
+              <button onclick="TitanMissionModule.useItem('drill')"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer ${state.inventory.drillUsesLeft > 0 ? 'bg-slate-900 border border-purple-500/50 hover:border-purple-400 text-purple-200' : 'bg-slate-950/60 border border-slate-800 text-slate-500 opacity-60'}">
+                <span>🔬 [4] Cryo-Drill (${state.inventory.drillUsesLeft} left)</span>
+              </button>
+              <div class="border-l border-slate-700 pl-2 text-[10px] text-slate-300 flex items-center gap-1">
+                <span>CANISTERS:</span>
+                <span class="text-white font-bold">${state.inventory.samples.length}/4</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MIDDLE RIGHT: COLLAPSIBLE SOCRATIC HERMES-9 AI ADVISOR -->
+          <div class="flex justify-end my-auto">
+            ${state.advisorOpen ? `
+              <div class="pointer-events-auto jpl-cyan rounded-2xl w-80 sm:w-96 p-3.5 space-y-2.5 font-mono text-xs">
+                <div class="flex items-center justify-between border-b border-cyan-500/20 pb-1.5">
+                  <span class="text-cyan-300 font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> HERMES-9 // TACTICAL AI
+                  </span>
+                  <span class="text-[10px] text-slate-400">ADVISORY ONLY</span>
+                </div>
+                <div class="space-y-2 max-h-36 overflow-y-auto thin-scroll pr-1 text-[11px] leading-relaxed">
+                  ${state.advisorMessages.map(m => `
+                    <div class="${m.sender === 'HERMES-9' ? 'text-cyan-100 bg-slate-950/80 p-2 rounded-lg border border-cyan-500/20' : 'text-amber-300 text-right'}">
+                      <span class="font-bold">${m.sender}:</span> ${m.text}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <button onclick="TitanMissionModule.quickAsk('Analyze Hull vs O2 risk')" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-cyan-200 cursor-pointer">Hull vs O₂</button>
+                  <button onclick="TitanMissionModule.quickAsk('Prioritize Comms or Lake?')" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-cyan-200 cursor-pointer">Comms vs Lake</button>
+                  <button onclick="TitanMissionModule.quickAsk('Assess ascent readiness')" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-cyan-200 cursor-pointer">Ascent Check</button>
+                </div>
+                <form onsubmit="TitanMissionModule.submitAsk(event)" class="flex gap-1.5">
+                  <input id="hermes-input" type="text" placeholder="Ask telemetry trade-off..."
+                    class="flex-1 bg-slate-950/90 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-cyan-400" />
+                  <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-cyan-400 text-slate-950 font-bold text-[11px] cursor-pointer">ASK</button>
+                </form>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- BOTTOM BAR: MOVEMENT HINT & PROXIMITY ACTION BUTTON -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="pointer-events-auto jpl-panel rounded-xl px-3.5 py-2 font-mono text-[11px] text-slate-300">
+              <span class="text-amber-400 font-bold">EVA CONTROLS:</span> WASD / Arrows or Click Terrain to Walk • Press <span class="text-cyan-300 font-bold">[E]</span> at Sites
+            </div>
+            ${nearSite && !modalDilemma ? `
+              <button onclick="TitanMissionModule.openSite('${nearSite.id}')"
+                class="pointer-events-auto px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-mono font-bold text-xs shadow-[0_0_20px_rgba(245,158,11,0.5)] cursor-pointer">
+                [E] INSPECT ${nearSite.name}
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- CENTER HIGH-STAKE DILEMMA MODAL (NO RIGHT ANSWER) -->
+          ${modalSite && modalDilemma ? `
+            <div class="pointer-events-auto fixed inset-0 bg-black/65 flex items-center justify-center p-4 z-40">
+              <div class="jpl-panel rounded-3xl max-w-xl w-full p-6 space-y-4 border-2 border-amber-400/60">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs text-amber-400">${modalSite.code} // ${modalSite.tag}</span>
+                  <button onclick="TitanMissionModule.closeModal()" class="font-mono text-xs text-slate-400 hover:text-white cursor-pointer">[ESC] CLOSE</button>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-white">${modalDilemma.title}</h3>
+                  <div class="font-mono text-[11px] text-cyan-300 mt-1">${modalDilemma.telemetry}</div>
+                </div>
+                <div class="space-y-3">
+                  ${modalDilemma.choices.map(c => `
+                    <button onclick="TitanMissionModule.choose('${modalSite.id}', '${c.id}')"
+                      class="w-full text-left p-4 rounded-2xl bg-slate-950/90 hover:bg-slate-900 border border-slate-700 hover:border-amber-400 transition-all cursor-pointer">
+                      <div class="font-bold text-white text-sm">${c.label}</div>
+                      <div class="font-mono text-xs text-amber-300 mt-1">${c.costText}</div>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          ` : modalSite && !modalDilemma ? `
+            <div class="pointer-events-auto fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-40">
+              <div class="jpl-panel rounded-2xl max-w-md w-full p-5 text-center space-y-3">
+                <div class="font-mono text-xs text-emerald-400">${modalSite.code} // ALL SITE PROTOCOLS EXECUTED</div>
+                <h3 class="text-lg font-bold text-white">${modalSite.name}</h3>
+                <p class="text-xs text-slate-300">No further telemetry or repair operations remain at this sector.</p>
+                <button onclick="TitanMissionModule.closeModal()" class="px-5 py-2 rounded-xl bg-cyan-400 text-slate-950 font-mono font-bold text-xs cursor-pointer">CONTINUE EVA</button>
+              </div>
+            </div>
+          ` : ''}
+        `;
+      }
+
+      // =======================================================================
+      // 11. PUBLIC MODULE API (TEAM MERGE READY)
+      // =======================================================================
+      function init(opts = {}) {
+        mergeConfig = { ...mergeConfig, ...opts };
+        state.phase = 'briefing';
+        render();
+      }
+
+      function destroy() {
+        stopSurfaceLoop();
+        if (!AudioFX.muted) AudioFX.toggleMute();
+      }
+
+      async function claimExpeditionReward() {
+        AudioFX.click();
+        const btn = document.getElementById('btn-claim-reward');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'TRANSMITTING TELEMETRY...';
+        }
+        const payload = {
+          mission_id: 'TITAN-SURFACE-EVA',
+          mission_name: 'Titan: Last Transmission Surface Expedition',
+          score: state.debriefOutcome ? state.debriefOutcome.total : 85,
+          science_score: Math.round(state.scienceScore),
+          survived: state.debriefOutcome ? state.debriefOutcome.survived : true,
+          data_transmitted_gb: state.dataUsed,
+          grade: state.debriefOutcome ? state.debriefOutcome.grade : 'MISSION SUCCESS',
+          details: `Samples: ${state.inventory.samples.join(', ') || 'None'}. Final Hull: ${state.hull}%.`
+        };
+        try {
+          const res = await fetch('/api/v1/agency/expedition/reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            state.claimedReward = data;
+            AudioFX.radarPing();
+            render();
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'TITAN_EXPEDITION_COMPLETE', reward: data }, '*');
+            }
+          } else {
+            if (btn) btn.textContent = 'TRANSMISSION ERROR';
+          }
+        } catch (err) {
+          console.error('Failed to claim reward:', err);
+          if (btn) btn.textContent = 'OFFLINE - RETRY';
+        }
+      }
+
+      return {
+        init,
+        destroy,
+        reset: () => { AudioFX.click(); state.phase = 'briefing'; render(); },
+        returnToHub: () => { AudioFX.click(); if (mergeConfig.onReturnToHub) mergeConfig.onReturnToHub(); },
+        toggleAudioBtn: () => { AudioFX.toggleMute(); render(); if (state.phase === 'surface') drawSurface(); },
+        setRole: (r) => { AudioFX.click(); state.role = r; render(); },
+        setHullAlloc: (val) => { state.hullAlloc = parseInt(val, 10); render(); },
+        toggleRTG: (val) => { AudioFX.click(); state.extraRTG = val; render(); },
+        launchMission: startMissionFromBriefing,
+        canvasClick: handleCanvasClick,
+        openSite: (id) => { AudioFX.click(); state.openDilemmaSiteId = id; renderHUD(); },
+        closeModal: () => { AudioFX.click(); state.openDilemmaSiteId = null; renderHUD(); },
+        choose: resolveDilemmaChoice,
+        useItem: useInventoryItem,
+        claimExpeditionReward,
+        attemptAscent: attemptAscentLaunch,
+        toggleAdvisor: () => { AudioFX.click(); state.advisorOpen = !state.advisorOpen; renderHUD(); },
+        quickAsk: (q) => askHermes(q),
+        submitAsk: (e) => {
+          e.preventDefault();
+          const inp = document.getElementById('hermes-input');
+          if (inp && inp.value.trim()) {
+            const val = inp.value;
+            inp.value = '';
+            askHermes(val);
+          }
+        }
+      };
+    })();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      window.TitanMissionModule.init({ containerId: 'titan-game-root' });
+    });
+  </script>
+</body>
+</html>
