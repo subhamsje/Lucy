@@ -349,6 +349,14 @@
     </div>
     
     <div style="display: flex; gap: 8px; align-items: center;">
+      <!-- Live Dynamic Player Budget & R&D Header Readout -->
+      <div style="display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; background: rgba(0,0,0,0.65); border: 1px solid var(--border-dark); padding: 4px 10px; border-radius: 3px;">
+        <span style="color: var(--text-dim);">BUDGET:</span>
+        <strong id="marsHeaderCredits" style="color: var(--mars-sand);">400,000 CR</strong>
+        <span style="color: var(--text-dim);">|</span>
+        <span style="color: var(--text-dim);">R&D:</span>
+        <strong id="marsHeaderRp" style="color: var(--accent-cyan);">120 RP</strong>
+      </div>
       <button onclick="showScreen('screenWelcome')" class="btn">HUB MENU</button>
       <button onclick="openMultiplayerModal()" class="btn" style="background: rgba(56, 189, 248, 0.12); border-color: #38bdf8; color: #38bdf8; font-weight: 700;">
         👥 MULTIPLAYER (4P)
@@ -1860,7 +1868,7 @@
     </div>
   </div>
 
-  id="marsToast">
+  <div id="marsToast">
     <div id="marsToastTitle" style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 2px;">NOTIFICATION</div>
     <div id="marsToastMsg" style="color: var(--text-normal);">Message details</div>
   </div>
@@ -2347,6 +2355,11 @@
           MarsAudioFX.playThruster(1.0, 1.2);
         } else {
           clearInterval(launchTimer);
+          if (MarsGame.satellite.validation && MarsGame.satellite.validation.total_cost_credits) {
+            const cost = MarsGame.satellite.validation.total_cost_credits;
+            updateMarsHeaderBalances(-cost, 0);
+            showToast("HARDWARE BUDGET COMMITTED", `Deducted ${cost.toLocaleString()} CR for flight hardware manufacturing.`, "var(--mars-sand)");
+          }
           showToast("TMI COMPLETE", "Prepare for Mars Orbital Insertion retrograde burn!", "var(--accent-cyan)");
           setTimeout(() => {
             startOrbitalInsertionGame();
@@ -2788,12 +2801,18 @@
       const toast = document.getElementById('marsToast');
       const tTitle = document.getElementById('marsToastTitle');
       const tMsg = document.getElementById('marsToastMsg');
-      tTitle.innerText = title;
-      tTitle.style.color = color;
-      tMsg.innerText = msg;
-      toast.style.borderColor = color;
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+      if (tTitle) {
+        tTitle.innerText = title;
+        tTitle.style.color = color;
+      }
+      if (tMsg) {
+        tMsg.innerText = msg;
+      }
+      if (toast) {
+        toast.style.borderColor = color;
+        toast.style.display = 'block';
+        setTimeout(() => { if (toast) toast.style.display = 'none'; }, 4000);
+      }
     }
 
     // Master Game State
@@ -2803,8 +2822,8 @@
         totalScore: 0,
         missionsCompleted: 0,
         totalDataCollectedMB: 0,
-        researchPoints: 120,
-        credits: 400000,
+        researchPoints: parseInt(localStorage.getItem('khagol_mars_rp') || '120', 10),
+        credits: parseFloat(localStorage.getItem('khagol_mars_credits') || '400000'),
         achievements: []
       },
       satellite: {
@@ -2855,6 +2874,7 @@
 
     // Load Game Config on Startup
     async function initMarsGame() {
+      updateMarsHeaderBalances();
       try {
         const res = await fetch('/api/v1/mars/config');
         MarsGame.config = await res.json();
@@ -3032,7 +3052,8 @@
           body: JSON.stringify({
             selected_components: MarsGame.satellite.selectedComponents,
             selected_instruments: MarsGame.satellite.selectedInstruments,
-            mission_id: MarsGame.satellite.missionId
+            mission_id: MarsGame.satellite.missionId,
+            player_budget_credits: MarsGame.player.credits
           })
         });
         const val = await res.json();
@@ -3047,8 +3068,11 @@
         document.getElementById('tmMassBar').style.width = `${Math.min(100, (val.total_mass_kg / val.mass_limit_kg) * 100)}%`;
         document.getElementById('tmMassBar').style.background = massColor;
 
-        document.getElementById('tmBudgetVal').innerText = `${val.remaining_budget_credits.toLocaleString()} cr`;
-        document.getElementById('tmBudgetBar').style.width = `${Math.min(100, (val.remaining_budget_credits / 400000) * 100)}%`;
+        document.getElementById('tmBudgetVal').innerText = `${Math.round(val.remaining_budget_credits).toLocaleString()} cr`;
+        const bPct = Math.max(0, Math.min(100, (val.remaining_budget_credits / (MarsGame.player.credits || 400000)) * 100));
+        document.getElementById('tmBudgetBar').style.width = `${bPct}%`;
+        document.getElementById('tmBudgetBar').style.background = val.is_budget_valid ? 'var(--mars-sand)' : 'var(--accent-alert)';
+        updateMarsHeaderBalances();
 
         document.getElementById('tmPowerGenVal').innerText = `${val.power_generation_w} W`;
         document.getElementById('tmPowerConVal').innerText = `${val.power_consumption_w} W`;
@@ -3272,6 +3296,11 @@
           MarsAudioFX.playThruster(1.0, 1.2);
         } else {
           clearInterval(launchTimer);
+          if (MarsGame.satellite.validation && MarsGame.satellite.validation.total_cost_credits) {
+            const cost = MarsGame.satellite.validation.total_cost_credits;
+            updateMarsHeaderBalances(-cost, 0);
+            showToast("HARDWARE BUDGET COMMITTED", `Deducted ${cost.toLocaleString()} CR for flight hardware manufacturing.`, "var(--mars-sand)");
+          }
           showToast("TMI COMPLETE", "Prepare for Mars Orbital Insertion retrograde burn!", "var(--accent-cyan)");
           setTimeout(() => {
             startOrbitalInsertionGame();
@@ -3503,7 +3532,8 @@
       document.getElementById('debriefEfficiencyVal').innerText = `94%`;
       document.getElementById('debriefChallengesVal').innerText = `${MarsGame.satellite.challengesResolved} RESOLVED`;
       document.getElementById('debriefAchievementsVal').innerText = `+1 UNLOCKED`;
-      document.getElementById('debriefRewardText').innerText = `+${m.reward_rp} RP and +$${(m.reward_credits/10000).toFixed(1)}M Capital funding awarded.`;
+      document.getElementById('debriefRewardText').innerText = `+${m.reward_rp} RP and +${m.reward_credits.toLocaleString()} CR added to available budget.`;
+      updateMarsHeaderBalances(m.reward_credits, m.reward_rp);
 
       // If combined mode, advance to Stage 4
       if (MarsGame.combined.active) {
@@ -3859,7 +3889,11 @@
         showToast("TRANSMISSION CONFIRMED", `Successfully downlinked ${totalMB.toFixed(1)} MB to Earth archive. Local storage freed!`, "var(--accent-green)");
         dispatchMpAction('TRANSMIT_DATA', {});
 
-        document.getElementById('earthTransmittedDataCount').innerText = `${MarsGame.rover.deliveredFiles.reduce((acc, f) => acc + f.sizeMB, 0).toFixed(1)} MB (${MarsGame.rover.deliveredFiles.length} DELIVERED)`;
+        const totalDelivered = MarsGame.rover.deliveredFiles.reduce((acc, f) => acc + f.sizeMB, 0);
+        document.getElementById('earthTransmittedDataCount').innerText = `${totalDelivered.toFixed(1)} MB (${MarsGame.rover.deliveredFiles.length} DELIVERED)`;
+        const earnCredits = Math.round(totalMB * 1200);
+        updateMarsHeaderBalances(earnCredits, Math.max(1, Math.round(totalMB * 0.5)));
+        showToast("DATA ARCHIVED & CREDITED", `Beamed to Earth DSN! Earned +${earnCredits.toLocaleString()} CR.`, "var(--accent-green)");
       }, delay * 1000);
     }
 
@@ -3894,7 +3928,9 @@
       document.getElementById('debriefEfficiencyVal').innerText = `${MarsGame.rover.energy}% ENERGY LEFT`;
       document.getElementById('debriefChallengesVal').innerText = `3 RESOLVED`;
       document.getElementById('debriefAchievementsVal').innerText = `+1 UNLOCKED`;
-      document.getElementById('debriefRewardText').innerText = `+75 RP and +$10.0M Capital funding awarded.`;
+      const rovCredits = Math.round(deliveredMB * 1500) + 50000;
+      document.getElementById('debriefRewardText').innerText = `+75 RP and +${rovCredits.toLocaleString()} CR added to available budget.`;
+      updateMarsHeaderBalances(rovCredits, 75);
 
       // If combined mode, advance to stage 7
       if (MarsGame.combined.active) {
@@ -4592,6 +4628,36 @@
         openRoverGuideModal();
       }
     });
+
+
+    // =========================================================================
+    // DYNAMIC BUDGET & FINANCIAL TREASURY MANAGEMENT
+    // =========================================================================
+    function updateMarsHeaderBalances(deltaCredits = 0, deltaRp = 0) {
+      if (deltaCredits !== 0) {
+        MarsGame.player.credits = Math.max(0, MarsGame.player.credits + deltaCredits);
+      }
+      if (deltaRp !== 0) {
+        MarsGame.player.researchPoints = Math.max(0, MarsGame.player.researchPoints + deltaRp);
+      }
+
+      const credEl = document.getElementById('marsHeaderCredits');
+      if (credEl) {
+        credEl.innerText = `${Math.round(MarsGame.player.credits).toLocaleString()} CR`;
+        credEl.style.color = MarsGame.player.credits > 100000 ? 'var(--mars-sand)' : (MarsGame.player.credits > 30000 ? '#fde047' : 'var(--accent-alert)');
+      }
+      const rpEl = document.getElementById('marsHeaderRp');
+      if (rpEl) {
+        rpEl.innerText = `${MarsGame.player.researchPoints} RP`;
+      }
+      const workRp = document.getElementById('workshopResearchPointsVal');
+      if (workRp) {
+        workRp.innerText = `${MarsGame.player.researchPoints} RP`;
+      }
+
+      localStorage.setItem('khagol_mars_credits', MarsGame.player.credits);
+      localStorage.setItem('khagol_mars_rp', MarsGame.player.researchPoints);
+    }
 
 </script>
 
